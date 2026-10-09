@@ -120,7 +120,7 @@ Demo tickers: **NVDA, JPM, XOM**.
 
 ## Development
 
-- One feature branch per task; pull requests need one reviewer
+- One feature branch per role; pull requests need one reviewer
 - PEP 8 enforced with `black` and `ruff` via pre-commit
 - `nbstripout` keeps notebook diffs clean
 - Run tests with `pytest`
