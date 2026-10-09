@@ -93,6 +93,7 @@ ANTHROPIC_API_KEY=
 FRED_API_KEY=
 NEWSAPI_KEY=
 EDGAR_USER_AGENT="Your Name your@email.com"
+KAGGLE_KEY=
 ```
 
 Download the Kaggle dataset into `data/kaggle/`.
