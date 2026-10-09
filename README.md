@@ -90,7 +90,6 @@ Required in `.env`:
 ```
 OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
-GOOGLE_API_KEY=          # only if Gemini is the evaluator
 FRED_API_KEY=
 NEWSAPI_KEY=
 EDGAR_USER_AGENT="Your Name your@email.com"
