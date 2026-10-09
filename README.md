@@ -53,22 +53,26 @@ Ticker ─► Planner ◄── memory/notes.json
 | Evaluator | GPT-6 Sol or Gemini 3.8 Flash (different family from the writer) |
 | Embeddings | `all-MiniLM-L6-v2` |
 
-Model names are set in `src/config.py`.
+Model names are set in `src/config.py`. `src/llm.py` routes `claude-*` models to Anthropic and everything else to OpenAI.
 
 ## Repository structure
 
 ```
 equity-agent/
 ├── src/
-│   ├── tools/      yfinance, edgar, fred, news wrappers
-│   ├── chains/     news_chain.py
-│   ├── agents/     planner, router, earnings, news, market, evaluator, optimizer
-│   ├── memory/     store.py
-│   ├── trace.py    records every step of a run
-│   ├── display.py  renders the trace in the notebook
-│   ├── config.py   model names and settings
-│   └── graph.py    LangGraph wiring
-├── notebooks/final_project.ipynb
+│   ├── tools/        market, macro, news, filings, retrieval (search_filings)
+│   ├── chains/       news_chain.py (5-step prompt chain), kaggle.py, schemas.py
+│   ├── agents/       planner, router, specialists, synthesizer, evaluator, toolkit
+│   ├── memory/       store.py (notes.json read/write)
+│   ├── graph.py      LangGraph wiring; run_agent(ticker)
+│   ├── evaluation.py baseline brief, numeric spot-check, tool success rate
+│   ├── trace.py      RunTrace: records every step of a run
+│   ├── display.py    renders the trace in the notebook
+│   ├── llm.py        structured() for OpenAI and Anthropic
+│   └── config.py     model names, tickers, settings
+├── notebooks/
+│   ├── 01_data_and_nlp_starter.ipynb   data tools, Kaggle EDA, news chain
+│   └── 02_agent_run.ipynb              full agent run + evaluation
 ├── memory/notes.json
 ├── runs/           saved trace per run
 ├── data/           cache + Kaggle sample (large files gitignored)
@@ -78,7 +82,7 @@ equity-agent/
 ## Setup
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/nicole-rowley-msaai/MS_AAI_520_NLP_GenAI_Final.git equity-agent
 cd equity-agent
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
@@ -103,10 +107,12 @@ Download the Kaggle dataset into `data/kaggle/`.
 ```python
 from src.graph import run_agent
 
-report, trace = run_agent("NVDA")
+report, trace, state = run_agent("NVDA")
+print(report)                 # markdown research brief
+trace.save()                  # runs/NVDA_<timestamp>.json
 ```
 
-Or open `notebooks/final_project.ipynb` and run all cells. The notebook prints the research plan, tool calls, routing decisions, each prompt-chain step, evaluator scores and critiques, the final report, reflection, and memory changes.
+Or open `notebooks/02_agent_run.ipynb` in Colab and run all cells. The notebook prints the research plan, tool calls, routing decisions, each prompt-chain step, evaluator scores and critiques, the final report, reflection, and memory changes.
 
 ## Evaluation
 
