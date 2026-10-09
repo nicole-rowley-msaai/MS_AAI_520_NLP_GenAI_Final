@@ -41,7 +41,9 @@ def _anthropic(model: str, system: str, user: str, schema: type[BaseModel]):
     return resp.parsed_output
 
 
-def structured(model: str, system: str, user: str, schema: type[BaseModel]) -> BaseModel:
+def structured(
+    model: str, system: str, user: str, schema: type[BaseModel]
+) -> BaseModel:
     """Call the model and parse its reply into `schema`."""
     if model.startswith("claude"):
         return _anthropic(model, system, user, schema)

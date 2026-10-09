@@ -29,8 +29,9 @@ EVAL_SYSTEM = (
 
 OPTIMIZE_SYSTEM = (
     "Revise the research brief to address every critique. Keep what was "
-    "correct. Do not add figures that are not in the findings. Return the "
-    "complete revised brief."
+    "correct. Do not add figures that are not in the findings. Keep the bull "
+    "and bear cases to at most 5 points each. Return the complete revised "
+    "brief."
 )
 
 REFLECT_SYSTEM = (
@@ -43,14 +44,19 @@ REFLECT_SYSTEM = (
 )
 
 
-def evaluate(draft: Draft, findings: list[Finding],
-             model: str = MODELS["evaluator"]) -> Evaluation:
+def evaluate(
+    draft: Draft, findings: list[Finding], model: str = MODELS["evaluator"]
+) -> Evaluation:
     user = f"FINDINGS\n{findings_text(findings)}\n\nBRIEF\n{render(draft)}"
     return structured(model, EVAL_SYSTEM, user, Evaluation)
 
 
-def optimize(draft: Draft, evaluation: Evaluation, findings: list[Finding],
-             model: str = MODELS["writer"]) -> Draft:
+def optimize(
+    draft: Draft,
+    evaluation: Evaluation,
+    findings: list[Finding],
+    model: str = MODELS["writer"],
+) -> Draft:
     user = (
         f"FINDINGS\n{findings_text(findings)}\n\n"
         f"CURRENT BRIEF\n{render(draft)}\n\n"
@@ -62,8 +68,12 @@ def optimize(draft: Draft, evaluation: Evaluation, findings: list[Finding],
     return revised
 
 
-def reflect(draft: Draft, findings: list[Finding], tool_log: list[dict],
-            model: str = MODELS["writer"]) -> Reflection:
+def reflect(
+    draft: Draft,
+    findings: list[Finding],
+    tool_log: list[dict],
+    model: str = MODELS["writer"],
+) -> Reflection:
     failed = [t for t in tool_log if not t.get("ok")]
     user = (
         f"FINAL BRIEF\n{render(draft)}\n\n"

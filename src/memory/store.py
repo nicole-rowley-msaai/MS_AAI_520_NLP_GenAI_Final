@@ -28,9 +28,11 @@ def save_notes(notes: list[dict], path: Path = NOTES_PATH) -> None:
     path.write_text(json.dumps(notes[-MAX_NOTES:], indent=1))
 
 
-def relevant_notes(ticker: str, sector: str | None, notes: list[dict],
-                   limit: int = 8) -> list[dict]:
+def relevant_notes(
+    ticker: str, sector: str | None, notes: list[dict], limit: int = 8
+) -> list[dict]:
     """Same ticker first, then same sector, then general lessons."""
+
     def rank(n: dict) -> int:
         if n.get("ticker") == ticker:
             return 0
@@ -44,15 +46,25 @@ def relevant_notes(ticker: str, sector: str | None, notes: list[dict],
     return [n for n in ranked if rank(n) < 3][:limit]
 
 
-def add_lessons(ticker: str, sector: str | None, lessons: list[str],
-                path: Path = NOTES_PATH) -> list[dict]:
+def add_lessons(
+    ticker: str,
+    sector: str | None,
+    lessons: list[str],
+    path: Path = NOTES_PATH,
+) -> list[dict]:
     """Append this run's lessons; returns the new records."""
     notes = load_notes(path)
     today = date.today().isoformat()
     existing = {n["lesson"] for n in notes}
     new = [
-        {"ticker": ticker, "sector": sector or "", "date": today, "lesson": text}
-        for text in lessons if text and text not in existing
+        {
+            "ticker": ticker,
+            "sector": sector or "",
+            "date": today,
+            "lesson": text,
+        }
+        for text in lessons
+        if text and text not in existing
     ]
     save_notes(notes + new, path)
     return new

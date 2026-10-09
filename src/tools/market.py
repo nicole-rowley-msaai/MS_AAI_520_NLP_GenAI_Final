@@ -8,9 +8,18 @@ from src.config import PRICE_PERIOD
 from src.tools.cache import memory
 
 STAT_KEYS = [
-    "shortName", "sector", "industry", "marketCap", "trailingPE", "forwardPE",
-    "priceToBook", "profitMargins", "returnOnEquity", "debtToEquity",
-    "dividendYield", "beta",
+    "shortName",
+    "sector",
+    "industry",
+    "marketCap",
+    "trailingPE",
+    "forwardPE",
+    "priceToBook",
+    "profitMargins",
+    "returnOnEquity",
+    "debtToEquity",
+    "dividendYield",
+    "beta",
 ]
 
 
@@ -35,7 +44,11 @@ def get_key_stats(ticker: str) -> dict:
 def get_financials(ticker: str) -> dict[str, pd.DataFrame]:
     """Annual income statement, balance sheet, and cash-flow statement."""
     t = yf.Ticker(ticker)
-    return {"income": t.income_stmt, "balance": t.balance_sheet, "cashflow": t.cashflow}
+    return {
+        "income": t.income_stmt,
+        "balance": t.balance_sheet,
+        "cashflow": t.cashflow,
+    }
 
 
 def compute_technicals(prices: pd.DataFrame, benchmark: pd.DataFrame) -> dict:
@@ -44,7 +57,9 @@ def compute_technicals(prices: pd.DataFrame, benchmark: pd.DataFrame) -> dict:
     ret = close.pct_change().dropna()
     bench = benchmark["Close"].pct_change().dropna()
     both = pd.concat([ret, bench], axis=1, join="inner").dropna()
-    beta = np.cov(both.iloc[:, 0], both.iloc[:, 1])[0, 1] / both.iloc[:, 1].var()
+    beta = (
+        np.cov(both.iloc[:, 0], both.iloc[:, 1])[0, 1] / both.iloc[:, 1].var()
+    )
 
     def ret_over(days: int) -> float:
         return round(float(close.iloc[-1] / close.iloc[-days - 1] - 1), 4)

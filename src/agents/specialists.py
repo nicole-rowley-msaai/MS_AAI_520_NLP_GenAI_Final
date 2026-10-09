@@ -17,14 +17,16 @@ from src.trace import RunTrace
 SPECIALIST_SYSTEM = {
     "earnings": (
         "You are an earnings and fundamentals analyst. From the tool output, "
-        "report revenue, margins, earnings, cash flow, leverage, and valuation "
+        "report revenue, margins, earnings, cash flow, leverage, and "
+        "valuation "
         "multiples with their values. Quote filing excerpts for risks. Only "
         "state figures that appear in the data."
     ),
     "market": (
         "You are a market and macro analyst. From the tool output, report "
         "recent returns, volatility, trend versus moving averages, beta, and "
-        "how the macro backdrop (rates, inflation, growth) bears on the stock. "
+        "how the macro backdrop (rates, inflation, growth) bears on the "
+        "stock. "
         "Only state figures that appear in the data."
     ),
     "general": (
@@ -39,8 +41,9 @@ def _dump(obj) -> str:
     return json.dumps(obj, default=str)[:12000]
 
 
-def run_specialist(route: Route, ticker: str, steps: list[PlanStep],
-                   trace: RunTrace) -> Finding:
+def run_specialist(
+    route: Route, ticker: str, steps: list[PlanStep], trace: RunTrace
+) -> Finding:
     if route == "news":
         return _news_specialist(ticker, trace)
 
@@ -61,7 +64,10 @@ def run_specialist(route: Route, ticker: str, steps: list[PlanStep],
         f"Tool output:\n{_dump(outputs)}"
     )
     finding = structured(
-        MODELS["writer"], SPECIALIST_SYSTEM[route], user, Finding,
+        MODELS["writer"],
+        SPECIALIST_SYSTEM[route],
+        user,
+        Finding,
     )
     finding.route = route
     finding.sources = sorted(set(sources))
@@ -70,7 +76,21 @@ def run_specialist(route: Route, ticker: str, steps: list[PlanStep],
 
 def _news_specialist(ticker: str, trace: RunTrace) -> Finding:
     chain_log: list[dict] = []
-    digest = run_news_chain(ticker, COMPANIES.get(ticker, ticker), trace=chain_log)
+    digest = run_news_chain(
+        ticker, COMPANIES.get(ticker, ticker), trace=chain_log
+    )
+    ingest = chain_log[0]["output"] if chain_log else {}
+    trace.log(
+        "tool",
+        "call",
+        {"tool": "get_news", "ticker": ticker},
+        {
+            "ok": True,
+            "rows": ingest.get("n", 0),
+            "error": None,
+            "preview": ingest.get("sample", []),
+        },
+    )
     for entry in chain_log:
         trace.log("news_chain", entry["step"], output=entry["output"])
     return Finding(

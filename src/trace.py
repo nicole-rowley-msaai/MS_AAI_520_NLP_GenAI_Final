@@ -35,8 +35,8 @@ def _jsonable(obj: Any) -> Any:
 
 @dataclass
 class Event:
-    step: str        # e.g. "planner", "tool", "router", "evaluator"
-    kind: str        # e.g. "plan", "call", "decision", "scores"
+    step: str  # e.g. "planner", "tool", "router", "evaluator"
+    kind: str  # e.g. "plan", "call", "decision", "scores"
     input: Any = None
     output: Any = None
     seconds: float = 0.0
@@ -50,24 +50,46 @@ class RunTrace:
     )
     events: list[Event] = field(default_factory=list)
 
-    def log(self, step: str, kind: str, input: Any = None,
-            output: Any = None, seconds: float = 0.0) -> None:
-        self.events.append(Event(
-            step, kind, _jsonable(input), _jsonable(output), round(seconds, 2),
-        ))
+    def log(
+        self,
+        step: str,
+        kind: str,
+        input: Any = None,
+        output: Any = None,
+        seconds: float = 0.0,
+    ) -> None:
+        self.events.append(
+            Event(
+                step,
+                kind,
+                _jsonable(input),
+                _jsonable(output),
+                round(seconds, 2),
+            )
+        )
 
     def timed(self, step: str, kind: str, func, *args, **kwargs):
-        """Run func, log its input and output with elapsed time, return output."""
+        """Run func, log input, output and elapsed time; return output."""
         start = time.perf_counter()
         out = func(*args, **kwargs)
-        self.log(step, kind, {"args": args, **kwargs}, out,
-                 time.perf_counter() - start)
+        self.log(
+            step,
+            kind,
+            {"args": args, **kwargs},
+            out,
+            time.perf_counter() - start,
+        )
         return out
 
-    def select(self, step: str | None = None, kind: str | None = None) -> list[Event]:
-        return [e for e in self.events
-                if (step is None or e.step == step)
-                and (kind is None or e.kind == kind)]
+    def select(
+        self, step: str | None = None, kind: str | None = None
+    ) -> list[Event]:
+        return [
+            e
+            for e in self.events
+            if (step is None or e.step == step)
+            and (kind is None or e.kind == kind)
+        ]
 
     def save(self, path: Path | None = None) -> Path:
         RUNS_DIR.mkdir(exist_ok=True)

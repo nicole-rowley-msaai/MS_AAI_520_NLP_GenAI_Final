@@ -5,7 +5,9 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 Sentiment = Literal["positive", "neutral", "negative"]
-Topic = Literal["earnings", "m&a", "legal", "product", "macro", "management", "other"]
+Topic = Literal[
+    "earnings", "m&a", "legal", "product", "macro", "management", "other"
+]
 
 
 class Article(BaseModel):
@@ -37,9 +39,15 @@ class ClassificationBatch(BaseModel):
 
 class Extraction(BaseModel):
     id: int
-    entities: list[str] = Field(description="Companies, people, products named")
-    figures: list[str] = Field(description="Numbers with units, e.g. 'revenue $26.0B'")
-    events: list[str] = Field(description="Dated events, e.g. '2026-09-12: guidance raised'")
+    entities: list[str] = Field(
+        description="Companies, people, products named"
+    )
+    figures: list[str] = Field(
+        description="Numbers with units, e.g. 'revenue $26.0B'"
+    )
+    events: list[str] = Field(
+        description="Dated events, e.g. '2026-09-12: guidance raised'"
+    )
 
 
 class ExtractionBatch(BaseModel):
@@ -49,6 +57,8 @@ class ExtractionBatch(BaseModel):
 class NewsDigest(BaseModel):
     ticker: str
     net_sentiment: Sentiment
-    top_drivers: list[str] = Field(description="3-5 key drivers, each citing article ids")
+    top_drivers: list[str] = Field(
+        description="3-5 key drivers, each citing article ids"
+    )
     risks: list[str]
     summary: str = Field(description="One short paragraph")

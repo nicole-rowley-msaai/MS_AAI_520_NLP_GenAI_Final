@@ -39,8 +39,10 @@ def secret(name: str) -> str:
 
 # Models: confirm exact API ids in each provider's docs ----------------------
 MODELS = {
-    "chain": os.getenv("CHAIN_MODEL", "gpt-6-luna"),        # news chain, router
-    "writer": os.getenv("WRITER_MODEL", "claude-sonnet-5"),  # planner, synthesis
+    "chain": os.getenv("CHAIN_MODEL", "gpt-6-luna"),  # news chain, router
+    "writer": os.getenv(
+        "WRITER_MODEL", "claude-sonnet-5"
+    ),  # planner, synthesis
     "evaluator": os.getenv("EVALUATOR_MODEL", "gpt-6-sol"),
     "embeddings": "all-MiniLM-L6-v2",
 }

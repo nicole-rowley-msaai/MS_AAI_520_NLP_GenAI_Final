@@ -23,8 +23,9 @@ def findings_text(findings: list[Finding]) -> str:
     return "\n\n".join(parts)
 
 
-def synthesize(ticker: str, findings: list[Finding],
-               model: str = MODELS["writer"]) -> Draft:
+def synthesize(
+    ticker: str, findings: list[Finding], model: str = MODELS["writer"]
+) -> Draft:
     user = (
         f"Ticker: {ticker} ({COMPANIES.get(ticker, ticker)})\n\n"
         + findings_text(findings)

@@ -15,14 +15,20 @@ ROUTER_SYSTEM = (
 
 # Deterministic fallback keyed on the tool, used if the LLM call fails.
 TOOL_ROUTES = {
-    "get_financials": "earnings", "get_key_stats": "earnings",
-    "search_filings": "earnings", "get_news": "news",
-    "get_price_history": "market", "get_macro_snapshot": "market",
+    "get_financials": "earnings",
+    "get_key_stats": "earnings",
+    "search_filings": "earnings",
+    "get_news": "news",
+    "get_price_history": "market",
+    "get_macro_snapshot": "market",
 }
 
 
 def route_step(step: PlanStep, model: str = MODELS["chain"]) -> RouteDecision:
-    user = f"Task {step.id}: {step.task}\nTool: {step.tool}\nPurpose: {step.purpose}"
+    user = (
+        f"Task {step.id}: {step.task}\n"
+        f"Tool: {step.tool}\nPurpose: {step.purpose}"
+    )
     try:
         decision = structured(model, ROUTER_SYSTEM, user, RouteDecision)
         decision.step_id = step.id
@@ -31,5 +37,7 @@ def route_step(step: PlanStep, model: str = MODELS["chain"]) -> RouteDecision:
         return RouteDecision(
             step_id=step.id,
             route=TOOL_ROUTES.get(step.tool, "general"),
-            reason=f"Rule-based fallback after LLM error: {type(exc).__name__}",
+            reason=(
+                "Rule-based fallback after LLM error: " f"{type(exc).__name__}"
+            ),
         )

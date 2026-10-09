@@ -1,4 +1,4 @@
-"""Planner: turns a ticker into an ordered research plan, informed by memory."""
+"""Planner: turns a ticker into an ordered research plan, using memory."""
 
 from src.agents.schemas import ResearchPlan
 from src.agents.toolkit import describe_tools
@@ -15,8 +15,12 @@ PLANNER_SYSTEM = (
 )
 
 
-def make_plan(ticker: str, sector: str | None, notes: list[dict],
-              model: str = MODELS["writer"]) -> ResearchPlan:
+def make_plan(
+    ticker: str,
+    sector: str | None,
+    notes: list[dict],
+    model: str = MODELS["writer"],
+) -> ResearchPlan:
     user = (
         f"Ticker: {ticker} ({COMPANIES.get(ticker, ticker)})\n"
         f"Sector: {sector or 'unknown'}\n\n"

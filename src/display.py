@@ -9,7 +9,9 @@ from src.trace import RunTrace
 
 def plan_table(trace: RunTrace) -> pd.DataFrame:
     plan = trace.select("planner", "plan")[-1].output
-    return pd.DataFrame(plan["steps"])[["id", "task", "tool", "purpose", "priority"]]
+    return pd.DataFrame(plan["steps"])[
+        ["id", "task", "tool", "purpose", "priority"]
+    ]
 
 
 def memory_read(trace: RunTrace) -> pd.DataFrame:
@@ -20,13 +22,19 @@ def memory_read(trace: RunTrace) -> pd.DataFrame:
 def tool_log(trace: RunTrace) -> pd.DataFrame:
     rows = []
     for e in trace.select("tool", "call"):
-        rows.append({
-            "tool": e.input.get("tool"),
-            "args": {k: v for k, v in e.input.items() if k not in ("tool", "ticker")},
-            "ok": e.output.get("ok"),
-            "rows": e.output.get("rows"),
-            "error": e.output.get("error"),
-        })
+        rows.append(
+            {
+                "tool": e.input.get("tool"),
+                "args": {
+                    k: v
+                    for k, v in e.input.items()
+                    if k not in ("tool", "ticker")
+                },
+                "ok": e.output.get("ok"),
+                "rows": e.output.get("rows"),
+                "error": e.output.get("error"),
+            }
+        )
     return pd.DataFrame(rows)
 
 
@@ -39,7 +47,11 @@ def news_chain_steps(trace: RunTrace, max_items: int = 5) -> None:
     for e in trace.select("news_chain"):
         print(f"\n=== {e.kind.upper()} ===")
         out = e.output
-        if isinstance(out, dict) and all(k.isdigit() for k in out) and len(out) > max_items:
+        if (
+            isinstance(out, dict)
+            and all(k.isdigit() for k in out)
+            and len(out) > max_items
+        ):
             out = dict(list(out.items())[:max_items])
         print(json.dumps(out, indent=1, default=str)[:3000])
 
@@ -51,8 +63,10 @@ def findings_table(trace: RunTrace) -> pd.DataFrame:
 
 def evaluation_history(final_state) -> pd.DataFrame:
     hist = final_state["history"]
-    rows = [{"iteration": h["iteration"], "average": h["average"], **h["scores"]}
-            for h in hist]
+    rows = [
+        {"iteration": h["iteration"], "average": h["average"], **h["scores"]}
+        for h in hist
+    ]
     return pd.DataFrame(rows)
 
 
@@ -90,6 +104,11 @@ def memory_diff(trace: RunTrace) -> pd.DataFrame:
 
 
 def timing_table(trace: RunTrace) -> pd.DataFrame:
-    rows = [{"step": e.step, "kind": e.kind, "seconds": e.seconds}
-            for e in trace.events if e.seconds]
-    return pd.DataFrame(rows).groupby("step")["seconds"].sum().round(1).to_frame()
+    rows = [
+        {"step": e.step, "kind": e.kind, "seconds": e.seconds}
+        for e in trace.events
+        if e.seconds
+    ]
+    return (
+        pd.DataFrame(rows).groupby("step")["seconds"].sum().round(1).to_frame()
+    )

@@ -6,8 +6,12 @@ from pydantic import BaseModel, Field
 
 Route = Literal["earnings", "news", "market", "general"]
 ToolName = Literal[
-    "get_price_history", "get_key_stats", "get_financials",
-    "get_macro_snapshot", "get_news", "search_filings",
+    "get_price_history",
+    "get_key_stats",
+    "get_financials",
+    "get_macro_snapshot",
+    "get_news",
+    "search_filings",
 ]
 
 
@@ -37,17 +41,21 @@ class RouteDecision(BaseModel):
 class Finding(BaseModel):
     route: Route
     summary: str = Field(description="2-4 sentences with concrete figures")
-    key_figures: list[str] = Field(description="e.g. 'Revenue FY2025: $130.5B'")
+    key_figures: list[str] = Field(
+        description="e.g. 'Revenue FY2025: $130.5B'"
+    )
     risks: list[str]
-    sources: list[str] = Field(description="Tool names or filing sections used")
+    sources: list[str] = Field(
+        description="Tool names or filing sections used"
+    )
 
 
 # Synthesis -----------------------------------------------------------------
 class Draft(BaseModel):
     ticker: str
-    thesis: str
-    bull_case: list[str]
-    bear_case: list[str]
+    thesis: str = Field(description="A decision summary in 3-4 sentences")
+    bull_case: list[str] = Field(max_length=5, description="At most 5 points")
+    bear_case: list[str] = Field(max_length=5, description="At most 5 points")
     fundamentals: str
     news_and_catalysts: str
     market_and_macro: str
@@ -68,7 +76,9 @@ class Evaluation(BaseModel):
 
     @property
     def average(self) -> float:
-        return round(sum(getattr(self, c) for c in CRITERIA) / len(CRITERIA), 2)
+        return round(
+            sum(getattr(self, c) for c in CRITERIA) / len(CRITERIA), 2
+        )
 
 
 # Reflection and learning ----------------------------------------------------

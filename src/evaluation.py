@@ -19,8 +19,10 @@ BASELINE_SYSTEM = (
 def baseline_brief(ticker: str, model: str = MODELS["writer"]) -> Draft:
     """No tools, no plan, no loop: one prompt. The bar the agent must beat."""
     draft = structured(
-        model, BASELINE_SYSTEM,
-        f"Ticker: {ticker} ({COMPANIES.get(ticker, ticker)})", Draft,
+        model,
+        BASELINE_SYSTEM,
+        f"Ticker: {ticker} ({COMPANIES.get(ticker, ticker)})",
+        Draft,
     )
     draft.ticker = ticker
     return draft
@@ -29,9 +31,11 @@ def baseline_brief(ticker: str, model: str = MODELS["writer"]) -> Draft:
 def score_against_findings(draft: Draft, findings: list[Finding]) -> dict:
     """Grade any draft with the same rubric and the same findings."""
     e = ev.evaluate(draft, findings)
-    return {"average": e.average,
-            **{c: getattr(e, c) for c in ev.CRITERIA},
-            "critiques": e.critiques}
+    return {
+        "average": e.average,
+        **{c: getattr(e, c) for c in ev.CRITERIA},
+        "critiques": e.critiques,
+    }
 
 
 NUMBER = re.compile(r"\$?\d[\d,]*\.?\d*%?[BMK]?")
@@ -43,7 +47,7 @@ def figures_in(text: str) -> set[str]:
 
 
 def unsupported_figures(draft: Draft, findings: list[Finding]) -> list[str]:
-    """Figures in the brief that appear in no finding (possible hallucination)."""
+    """Figures in the brief that no finding supports (hallucination check)."""
     brief = figures_in(render(draft))
     support = set()
     for f in findings:
@@ -54,14 +58,23 @@ def unsupported_figures(draft: Draft, findings: list[Finding]) -> list[str]:
 
 def tool_success_rate(trace) -> float:
     calls = [e.output for e in trace.select("tool", "call")]
-    return round(sum(1 for c in calls if c.get("ok")) / len(calls), 3) if calls else 0.0
+    return (
+        round(sum(1 for c in calls if c.get("ok")) / len(calls), 3)
+        if calls
+        else 0.0
+    )
 
 
 def quick_smoke(ticker: str) -> dict:
     """One call per tool, for the notebook's setup check."""
     out = {}
-    for name in ("get_price_history", "get_key_stats", "get_financials",
-                 "get_macro_snapshot", "get_news"):
+    for name in (
+        "get_price_history",
+        "get_key_stats",
+        "get_financials",
+        "get_macro_snapshot",
+        "get_news",
+    ):
         r = call_tool(name, ticker)
         out[name] = "ok" if r.ok else r.error
     return out
