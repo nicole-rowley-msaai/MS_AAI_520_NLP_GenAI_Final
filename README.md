@@ -50,7 +50,7 @@ Ticker ─► Planner ◄── memory/notes.json
 |---|---|
 | News chain and router | GPT-6 Luna |
 | Planner, synthesis, optimizer | Claude Sonnet 5 |
-| Evaluator | GPT-6 Sol or Gemini 3.8 Flash (different family from the writer) |
+| Evaluator | GPT-6 Sol (different family from the writer) |
 | Embeddings | `all-MiniLM-L6-v2` |
 
 Model names are set in `src/config.py`.
