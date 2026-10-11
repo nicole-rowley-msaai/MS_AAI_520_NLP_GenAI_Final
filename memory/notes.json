@@ -1,0 +1,62 @@
+[
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "For capital-intensive AI/semiconductor companies, pull segment-level revenue breakdowns to substantiate or refute customer/product concentration risk claims, not just generic 10-K risk-factor language"
+ },
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "When a stock move is attributed to 'raised guidance,' capture the actual guidance numbers (old vs new, consensus vs actual) alongside the price reaction for a verifiable causal link"
+ },
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "Always reconcile conflicting leverage/valuation metrics (e.g., balance-sheet debt/equity vs TTM debt/equity) before including both in a brief \u2014 pick one with a stated methodology or clearly label the gap as unresolved"
+ },
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "For high-beta growth stocks, pair volatility/beta stats with analyst consensus price targets and peer multiples so 'premium valuation' claims have relative, not just historical, context"
+ },
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "Treat insider sales as directional signals only after checking filing type (10b5-1 scheduled vs discretionary) \u2014 undifferentiated insider-sale mentions overstate bearish signal strength"
+ },
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "For AI/semiconductor dominance claims, always pull peer/competitor market share or revenue growth comparisons (AMD, custom ASICs) rather than asserting dominance from one company's data alone"
+ },
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "For companies with disclosed customer concentration risk, extract the specific percentage (e.g., '% of revenue from top 2 customers') from filings instead of only quoting qualitative risk language"
+ },
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "When citing beta or volatility metrics from multiple tools, cross-check for consistency and reconcile discrepancies before publishing"
+ },
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "For high-growth/high-multiple tech names, pull analyst consensus price targets and EPS revision trends to substantiate or challenge 'reasonable valuation' claims"
+ },
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "For export-control-sensitive companies, quantify exposure (e.g., % of revenue from restricted markets) rather than relying solely on risk-factor boilerplate"
+ }
+]
