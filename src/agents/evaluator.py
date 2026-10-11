@@ -14,6 +14,7 @@ from src.config import MODELS
 from src.llm import structured
 
 PASS_THRESHOLD = 4.0
+MIN_ITERATIONS = 1  # always apply one round of critique before stopping
 MAX_ITERATIONS = 3
 
 EVAL_SYSTEM = (

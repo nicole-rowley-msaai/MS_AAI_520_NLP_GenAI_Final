@@ -96,13 +96,23 @@ def plot_scores(final_state, ax=None):
 
     df = evaluation_history(final_state)
     ax = ax or plt.subplots(figsize=(5, 3))[1]
-    ax.plot(df["iteration"], df["average"], marker="o", color="#3b6fb6")
+    ax.plot(df["iteration"], df["average"], marker="o", ms=8, color="#3b6fb6")
+    for x, y in zip(df["iteration"], df["average"]):
+        ax.annotate(
+            f"{y:.1f}",
+            (x, y),
+            xytext=(0, 8),
+            ha="center",
+            textcoords="offset points",
+            fontsize=9,
+        )
     ax.axhline(4.0, ls="--", color="#999", lw=1, label="pass threshold")
     ax.set_xticks(df["iteration"])
-    ax.set_ylim(1, 5)
+    ax.set_xlim(df["iteration"].min() - 0.5, df["iteration"].max() + 0.5)
+    ax.set_ylim(1, 5.4)
     ax.set_xlabel("Evaluator iteration")
     ax.set_ylabel("Average score (1-5)")
-    ax.set_title("Score rises with each refinement")
+    ax.set_title("Evaluator score per revision")
     ax.spines[["top", "right"]].set_visible(False)
     ax.legend(frameon=False)
     return ax

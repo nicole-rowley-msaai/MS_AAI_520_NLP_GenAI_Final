@@ -119,7 +119,12 @@ def node_evaluate(state: AgentState) -> AgentState:
 
 
 def should_refine(state: AgentState) -> str:
-    passed = state["evaluation"].average >= ev.PASS_THRESHOLD
+    # Every draft gets at least MIN_ITERATIONS rounds of critique and
+    # revision; after that the loop stops as soon as the score passes.
+    done_minimum = state["iteration"] >= ev.MIN_ITERATIONS
+    passed = done_minimum and (
+        state["evaluation"].average >= ev.PASS_THRESHOLD
+    )
     exhausted = state["iteration"] + 1 >= ev.MAX_ITERATIONS
     state["trace"].log(
         "evaluator",

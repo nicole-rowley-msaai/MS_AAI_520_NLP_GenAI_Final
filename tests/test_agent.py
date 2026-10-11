@@ -76,7 +76,7 @@ class FakeLLM:
             )
         if schema is Evaluation:
             self.eval_calls += 1
-            s = 3 if self.eval_calls == 1 else 4
+            s = 5  # passes on the first draft; the loop must still run once
             return Evaluation(
                 completeness=s,
                 evidence=s,
@@ -167,13 +167,13 @@ def wired(monkeypatch, tmp_path):
     return g, fake, notes
 
 
-def test_full_run_loops_once_then_passes(wired):
+def test_full_run_revises_at_least_once(wired):
     g, fake, notes = wired
     report, trace, state = g.run_agent("X", save=False)
 
     assert "research brief" in report
-    assert [h["average"] for h in state["history"]] == [3.0, 4.0]
-    assert state["iteration"] == 1
+    assert [h["average"] for h in state["history"]] == [5.0, 5.0]
+    assert state["iteration"] == 1  # one forced revision, then pass
     assert fake.eval_calls == 2
 
     steps = {e.step for e in trace.events}
@@ -270,3 +270,49 @@ def test_long_thesis_does_not_fail_validation():
     )
     assert len(d.thesis) == 700
     assert d.bull_case == list("abcde")
+
+
+def test_structured_retries_on_malformed_reply(monkeypatch):
+    import src.llm as llm
+
+    calls = []
+
+    def flaky(model, system, user, schema):
+        calls.append(1)
+        if len(calls) < 2:
+            raise ValueError("truncated")
+        return Reflection(
+            weakest_section="",
+            unsupported_claims=[],
+            missing_data=[],
+            failed_tools=[],
+            what_to_change=[],
+            confidence="low",
+            lessons=[],
+        )
+
+    monkeypatch.setattr(llm, "_anthropic", flaky)
+    monkeypatch.setattr(llm.time, "sleep", lambda s: None)
+    out = llm.structured("claude-x", "s", "u", Reflection)
+    assert isinstance(out, Reflection) and len(calls) == 2
+
+
+def test_structured_falls_back_to_other_provider(monkeypatch):
+    import src.llm as llm
+
+    calls = []
+
+    def fake_anthropic(model, system, user, schema):
+        calls.append(model)
+        raise ValueError("stopped early")
+
+    def fake_openai(model, system, user, schema):
+        calls.append(model)
+        return schema(step_id=1, route="news", reason="ok")
+
+    monkeypatch.setattr(llm, "_anthropic", fake_anthropic)
+    monkeypatch.setattr(llm, "_openai", fake_openai)
+    monkeypatch.setattr(llm.time, "sleep", lambda s: None)
+    out = llm.structured("claude-x", "s", "u", RouteDecision)
+    assert out.route == "news"
+    assert calls[:3] == ["claude-x"] * 3 and len(calls) == 4

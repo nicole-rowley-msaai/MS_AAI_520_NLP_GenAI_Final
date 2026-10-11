@@ -20,7 +20,8 @@ from src.trace import RunTrace
 TOOL_DESCRIPTIONS = {
     "get_price_history": "Daily prices for 5 years; used for returns, "
     "volatility, moving averages, beta vs SPY.",
-    "get_key_stats": "Market cap, P/E, P/B, margins, ROE, debt/equity, beta.",
+    "get_key_stats": "Market cap, P/E, P/B, margins, ROE, analyst "
+    "price target and rating.",
     "get_financials": "Annual income statement, balance sheet, cash flow.",
     "get_macro_snapshot": "Latest CPI, Fed funds, 10-year yield, "
     "unemployment, GDP with one-year-ago values.",
@@ -88,7 +89,8 @@ def call_tool(
 KEY_STATS_NOTE = (
     "Trailing-twelve-month figures and analyst consensus from Yahoo Finance. "
     "Annual statements cover the last fiscal year and may differ. Leverage "
-    "is reported once, from the balance sheet, in get_financials."
+    "is reported once, from the balance sheet, in get_financials; beta is "
+    "reported once, computed against SPY, in get_price_history."
 )
 
 

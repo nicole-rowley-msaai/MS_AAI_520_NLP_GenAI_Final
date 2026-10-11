@@ -18,7 +18,6 @@ STAT_KEYS = [
     "profitMargins",
     "returnOnEquity",
     "dividendYield",
-    "beta",
     # Analyst consensus, so the writer can judge valuation against the
     # street's view rather than calling multiples "rich" unanchored.
     "targetMeanPrice",
