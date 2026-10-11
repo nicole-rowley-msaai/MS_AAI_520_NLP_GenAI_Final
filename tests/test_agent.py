@@ -255,3 +255,18 @@ def test_report_markdown_escapes_dollars():
 
     md = report_markdown("Revenue $215.9B and FCF $96.7B")
     assert md.data == r"Revenue \$215.9B and FCF \$96.7B"
+
+
+def test_long_thesis_does_not_fail_validation():
+    d = Draft(
+        ticker="X",
+        thesis="w" * 700,
+        bull_case=list("abcdefg"),
+        bear_case=[],
+        fundamentals="",
+        news_and_catalysts="",
+        market_and_macro="",
+        conclusion="",
+    )
+    assert len(d.thesis) == 700
+    assert d.bull_case == list("abcde")

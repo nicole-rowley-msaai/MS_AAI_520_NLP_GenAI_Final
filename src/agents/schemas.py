@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 Route = Literal["earnings", "news", "market", "general"]
 ToolName = Literal[
@@ -54,14 +54,24 @@ class Finding(BaseModel):
 class Draft(BaseModel):
     ticker: str
     thesis: str = Field(
-        max_length=600, description="A decision summary in 3-4 sentences"
+        description="A decision summary in 3-4 sentences, under 600 characters"
     )
-    bull_case: list[str] = Field(max_length=5, description="At most 5 points")
-    bear_case: list[str] = Field(max_length=5, description="At most 5 points")
+    bull_case: list[str] = Field(description="At most 5 points")
+    bear_case: list[str] = Field(description="At most 5 points")
     fundamentals: str
     news_and_catalysts: str
     market_and_macro: str
     conclusion: str
+
+    # Length limits are guidance for the writer, not hard validation: a
+    # 620-character thesis should be scored down by the evaluator, not
+    # crash the run. Lists are trimmed; the thesis is left for the
+    # evaluator, whose clarity criterion covers it.
+    @model_validator(mode="after")
+    def _trim_cases(self):
+        self.bull_case = self.bull_case[:5]
+        self.bear_case = self.bear_case[:5]
+        return self
 
 
 # Evaluation ----------------------------------------------------------------
