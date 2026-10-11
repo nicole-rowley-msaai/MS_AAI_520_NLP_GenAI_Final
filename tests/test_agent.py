@@ -237,3 +237,21 @@ def test_unsupported_figures_flags_hallucinated_numbers():
         conclusion="",
     )
     assert unsupported_figures(d, f) == ["$4.20"]
+
+
+def test_debt_to_equity_computed_from_balance_sheet():
+    from src.agents.toolkit import _debt_to_equity
+
+    summary = {
+        "Total Debt": {"2026-01-25": 11.04e9, "2025-01-26": 10.27e9},
+        "Stockholders Equity": {"2026-01-25": 157.29e9, "2025-01-26": 79.3e9},
+    }
+    ratio = _debt_to_equity(summary)
+    assert ratio == {"2026-01-25": 0.07, "2025-01-26": 0.13}
+
+
+def test_report_markdown_escapes_dollars():
+    from src.display import report_markdown
+
+    md = report_markdown("Revenue $215.9B and FCF $96.7B")
+    assert md.data == r"Revenue \$215.9B and FCF \$96.7B"

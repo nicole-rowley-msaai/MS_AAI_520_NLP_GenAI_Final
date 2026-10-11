@@ -86,8 +86,9 @@ def call_tool(
 
 
 KEY_STATS_NOTE = (
-    "Trailing-twelve-month figures from Yahoo Finance; debtToEquity is a "
-    "percentage. Annual statements cover the last fiscal year and may differ."
+    "Trailing-twelve-month figures and analyst consensus from Yahoo Finance. "
+    "Annual statements cover the last fiscal year and may differ. Leverage "
+    "is reported once, from the balance sheet, in get_financials."
 )
 
 
@@ -132,6 +133,27 @@ def _summarize_financials(statements: dict) -> dict:
                     )
                     for c in cols
                 }
+    ratio = _debt_to_equity(out)
+    if ratio:
+        out["Debt To Equity (balance sheet)"] = ratio
+    return out
+
+
+def _debt_to_equity(summary: dict) -> dict:
+    """Total debt / stockholders' equity per fiscal year, as a ratio.
+
+    Computed here so the brief has one leverage figure from one source;
+    Yahoo's TTM debtToEquity (a percentage on a different date) was
+    dropped from key stats because the two kept being reported side by
+    side without reconciliation.
+    """
+    debt = summary.get("Total Debt", {})
+    equity = summary.get("Stockholders Equity", {})
+    out = {}
+    for year, d in debt.items():
+        e = equity.get(year)
+        if d is not None and e:
+            out[year] = round(d / e, 3)
     return out
 
 

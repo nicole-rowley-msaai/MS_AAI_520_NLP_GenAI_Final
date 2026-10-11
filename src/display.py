@@ -16,7 +16,21 @@ def plan_table(trace: RunTrace) -> pd.DataFrame:
 
 def memory_read(trace: RunTrace) -> pd.DataFrame:
     notes = trace.select("memory", "read")[-1].output
+    if not notes:
+        print("No prior lessons: first run for this ticker and sector.")
     return pd.DataFrame(notes) if notes else pd.DataFrame(columns=["lesson"])
+
+
+def report_markdown(report: str):
+    """The brief as a Markdown display object, safe for Jupyter.
+
+    Jupyter runs MathJax on Markdown output, so any text between two
+    dollar signs ("$215.9B ... $96.7B") renders as a garbled formula.
+    Escaping the dollars keeps them literal.
+    """
+    from IPython.display import Markdown
+
+    return Markdown(report.replace("$", r"\$"))
 
 
 def tool_log(trace: RunTrace) -> pd.DataFrame:

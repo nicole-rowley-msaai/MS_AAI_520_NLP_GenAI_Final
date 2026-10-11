@@ -53,7 +53,9 @@ class Finding(BaseModel):
 # Synthesis -----------------------------------------------------------------
 class Draft(BaseModel):
     ticker: str
-    thesis: str = Field(description="A decision summary in 3-4 sentences")
+    thesis: str = Field(
+        max_length=600, description="A decision summary in 3-4 sentences"
+    )
     bull_case: list[str] = Field(max_length=5, description="At most 5 points")
     bear_case: list[str] = Field(max_length=5, description="At most 5 points")
     fundamentals: str

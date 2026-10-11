@@ -29,9 +29,9 @@ EVAL_SYSTEM = (
 
 OPTIMIZE_SYSTEM = (
     "Revise the research brief to address every critique. Keep what was "
-    "correct. Do not add figures that are not in the findings. Keep the bull "
-    "and bear cases to at most 5 points each. Return the complete revised "
-    "brief."
+    "correct. Do not add figures that are not in the findings. Keep the "
+    "thesis under 600 characters and the bull and bear cases to at most 5 "
+    "points each. Return the complete revised brief."
 )
 
 REFLECT_SYSTEM = (

@@ -5,3 +5,4 @@ __pycache__/
 data/cache/
 data/chroma/
 data/kaggle/*.csv
+runs/
