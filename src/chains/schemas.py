@@ -57,6 +57,11 @@ class ExtractionBatch(BaseModel):
 class NewsDigest(BaseModel):
     ticker: str
     net_sentiment: Sentiment
+    sentiment_counts: dict[str, int] = Field(
+        default_factory=dict,
+        description="Articles per label among the relevant items; filled "
+        "by the chain, not the model",
+    )
     top_drivers: list[str] = Field(
         description="3-5 key drivers, each citing article ids"
     )

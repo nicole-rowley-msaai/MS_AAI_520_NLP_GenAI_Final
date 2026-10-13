@@ -148,8 +148,30 @@ def extract(
 # 5. Summarize ------------------------------------------------------------
 SUMMARIZE_SYSTEM = (
     "Write a news digest for an equity analyst from the labeled, extracted "
-    "items below. Cite article ids like [3] for every driver and risk."
+    "items below. Cite article ids like [3] for every driver and risk. "
+    "The net sentiment is given; it is the majority label over the "
+    "relevant articles, so use it as stated and explain it in the summary."
 )
+
+NET_MARGIN = 0.15  # positive/negative needs this share-lead over the other
+
+
+def sentiment_counts(labels: dict, articles: list[Article]) -> dict:
+    counts = {"positive": 0, "neutral": 0, "negative": 0}
+    for a in articles:
+        counts[labels.get(a.id, {}).get("sentiment", "neutral")] += 1
+    return counts
+
+
+def net_sentiment(counts: dict) -> str:
+    """Majority rule with a margin, so a 40/38 split is called neutral."""
+    n = sum(counts.values()) or 1
+    lead = (counts["positive"] - counts["negative"]) / n
+    if lead > NET_MARGIN:
+        return "positive"
+    if lead < -NET_MARGIN:
+        return "negative"
+    return "neutral"
 
 
 def summarize(
@@ -167,8 +189,16 @@ def summarize(
             f"sentiment={lab.get('sentiment')} "
             f"| figures={fx.get('figures')} events={fx.get('events')}"
         )
-    user = f"Ticker: {ticker}\n\n" + "\n".join(lines)
-    return structured(model, SUMMARIZE_SYSTEM, user, NewsDigest)
+    counts = sentiment_counts(labels, articles)
+    net = net_sentiment(counts)
+    user = (
+        f"Ticker: {ticker}\nSentiment counts: {counts}\n"
+        f"Net sentiment: {net}\n\n" + "\n".join(lines)
+    )
+    digest = structured(model, SUMMARIZE_SYSTEM, user, NewsDigest)
+    digest.net_sentiment = net  # computed, not the model's opinion
+    digest.sentiment_counts = counts
+    return digest
 
 
 # Full chain --------------------------------------------------------------

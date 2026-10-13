@@ -1,0 +1,62 @@
+[
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "For high-growth tech/semis, always pull customer concentration percentages from 10-K filings rather than using qualitative language, since this is a recurring material risk factor"
+ },
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "When citing forward-looking supply/demand claims (e.g., 'sold out through X year'), flag single-source news items distinctly from financial-statement-backed facts"
+ },
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "For high-beta, high-multiple AI stocks, pair beta/volatility stats with options-market signals (IV, skew) for a fuller two-sided risk picture"
+ },
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "Always attempt to pull segment-level revenue breakdown for diversified tech companies to assess true concentration vs. headline growth narrative"
+ },
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "Explicitly define and apply a sentiment scoring methodology before labeling aggregate news sentiment as neutral/positive/negative to avoid unsupported editorializing"
+ },
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "For mega-cap AI/semis, always pull segment-level margin detail (not just consolidated gross margin) to explain compression/expansion drivers"
+ },
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "Treat options volume figures as neutral data points unless open interest or skew data confirms directional bias\u2014avoid labeling raw volume as 'bearish'"
+ },
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "For companies with customer concentration risk disclosed qualitatively, search filings for the specific revenue percentage by named customer if available"
+ },
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "When macro 10Y yield and Fed funds diverge sharply, flag the yield curve dynamic explicitly as a distinct macro risk factor separate from rate-cut narrative"
+ },
+ {
+  "ticker": "NVDA",
+  "sector": "Technology",
+  "date": "2026-10-11",
+  "lesson": "Always add at least one direct peer valuation comparison for high-multiple growth stocks to anchor whether current multiples are historically/competitively stretched"
+ }
+]

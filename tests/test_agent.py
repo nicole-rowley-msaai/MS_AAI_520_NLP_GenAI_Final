@@ -316,3 +316,18 @@ def test_structured_falls_back_to_other_provider(monkeypatch):
     out = llm.structured("claude-x", "s", "u", RouteDecision)
     assert out.route == "news"
     assert calls[:3] == ["claude-x"] * 3 and len(calls) == 4
+
+
+def test_net_sentiment_is_counted_not_judged():
+    from src.chains.news_chain import net_sentiment, sentiment_counts
+    from src.chains.schemas import Article
+
+    arts = [Article(id=i, title="t") for i in range(10)]
+    labels = {i: {"sentiment": "positive"} for i in range(6)}
+    labels.update({i: {"sentiment": "negative"} for i in range(6, 10)})
+    counts = sentiment_counts(labels, arts)
+    assert counts == {"positive": 6, "neutral": 0, "negative": 4}
+    assert net_sentiment(counts) == "positive"
+    assert net_sentiment({"positive": 5, "neutral": 0, "negative": 4}) == (
+        "neutral"
+    )
