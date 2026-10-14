@@ -122,7 +122,7 @@ def test_relevance_filter_drops_low_relevance(monkeypatch):
         ClassificationBatch,
         Extraction,
         ExtractionBatch,
-        NewsDigest,
+        NewsDigestDraft,
     )
 
     def fake_structured(model, system, user, schema):
@@ -150,7 +150,7 @@ def test_relevance_filter_drops_low_relevance(monkeypatch):
                     for i in ids
                 ]
             )
-        return NewsDigest(
+        return NewsDigestDraft(
             ticker="NVDA",
             net_sentiment="neutral",
             top_drivers=[],

@@ -54,16 +54,29 @@ class ExtractionBatch(BaseModel):
     items: list[Extraction]
 
 
-class NewsDigest(BaseModel):
+class NewsDigestDraft(BaseModel):
+    """What the summarizer model writes. OpenAI strict mode accepts only
+    required fields of plain types, so the counted fields live in the
+    subclass below and are filled in by the chain."""
+
     ticker: str
     net_sentiment: Sentiment
-    sentiment_counts: dict[str, int] = Field(
-        default_factory=dict,
-        description="Articles per label among the relevant items; filled "
-        "by the chain, not the model",
-    )
     top_drivers: list[str] = Field(
         description="3-5 key drivers, each citing article ids"
     )
     risks: list[str]
     summary: str = Field(description="One short paragraph")
+
+
+class SentimentCounts(BaseModel):
+    positive: int = 0
+    neutral: int = 0
+    negative: int = 0
+
+
+class NewsDigest(NewsDigestDraft):
+    sentiment_counts: SentimentCounts = Field(
+        default_factory=SentimentCounts,
+        description="Articles per label among the relevant items; counted "
+        "by the chain, not judged by the model",
+    )

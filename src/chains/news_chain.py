@@ -13,6 +13,7 @@ from src.chains.schemas import (
     ClassificationBatch,
     ExtractionBatch,
     NewsDigest,
+    NewsDigestDraft,
 )
 from src.config import MODELS, NEWS_LOOKBACK_DAYS
 from src.llm import structured
@@ -195,10 +196,11 @@ def summarize(
         f"Ticker: {ticker}\nSentiment counts: {counts}\n"
         f"Net sentiment: {net}\n\n" + "\n".join(lines)
     )
-    digest = structured(model, SUMMARIZE_SYSTEM, user, NewsDigest)
-    digest.net_sentiment = net  # computed, not the model's opinion
-    digest.sentiment_counts = counts
-    return digest
+    draft = structured(model, SUMMARIZE_SYSTEM, user, NewsDigestDraft)
+    return NewsDigest(
+        **{**draft.model_dump(), "net_sentiment": net},  # counted, not judged
+        sentiment_counts=counts,
+    )
 
 
 # Full chain --------------------------------------------------------------

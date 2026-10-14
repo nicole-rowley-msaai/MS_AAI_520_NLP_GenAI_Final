@@ -16,7 +16,7 @@ from src.chains.schemas import (
     ClassificationBatch,
     Extraction,
     ExtractionBatch,
-    NewsDigest,
+    NewsDigestDraft,
 )
 from src.memory import store
 from src.tools import ToolResult
@@ -105,8 +105,8 @@ class FakeLLM:
             return ExtractionBatch(
                 items=[Extraction(id=0, entities=[], figures=[], events=[])]
             )
-        if schema is NewsDigest:
-            return NewsDigest(
+        if schema is NewsDigestDraft:
+            return NewsDigestDraft(
                 ticker="X",
                 net_sentiment="neutral",
                 top_drivers=["d"],
