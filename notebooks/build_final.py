@@ -217,6 +217,14 @@ PART_C = """# Part C. Evaluation
 Part B showed one evaluator-optimizer loop. This part measures the agent
 against alternatives, all scored with the same rubric and the same
 findings so the comparison is fair.
+
+The numeric spot-check (`unsupported_*`) counts figures in a brief that
+appear in no finding. A figure the writer labels as calculated (for
+example "a calculated ~65% increase") is exempt: the evaluator asks for
+that label, and such figures are arithmetic on the findings rather than
+claims needing their own source. The baseline never sees the findings,
+so its evidence and accuracy scores are structurally low; the comparison
+measures whether tools and the loop produce a grounded brief.
 """
 
 SUMMARY = """## Summary
@@ -232,6 +240,13 @@ SUMMARY = """## Summary
 - **Robustness.** Each tool call is wrapped so a failed API degrades the
   brief instead of ending the run, and a model that keeps returning
   truncated JSON is retried on the other provider.
+- **Speed.** The three specialists run in parallel; the timing table
+  shows their summed time (`specialist`) against their wall time
+  (`specialists`).
+- **Known limits.** The reflection step inherits the model's priors and
+  has flagged correct current data (a 10-year yield above 5%, an analyst
+  target well above the price) as suspicious; segment-level revenue and
+  peer comparables are the data gaps it raises on every run.
 """
 
 # 01: data check, Kaggle EDA, classifier evaluation (after its setup)

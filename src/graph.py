@@ -5,6 +5,8 @@ run_agent(ticker) returns (report_markdown, trace). Every node logs to
 the RunTrace so the notebook can print each step.
 """
 
+import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import TypedDict
 
 from langgraph.graph import END, StateGraph
@@ -75,13 +77,21 @@ def node_route(state: AgentState) -> AgentState:
 
 
 def node_specialists(state: AgentState) -> AgentState:
+    """Run one specialist per route, in parallel.
+
+    The specialists are independent (each has its own steps and tools),
+    and together they are more than half of a run's wall time, so they
+    run in threads. The trace is append-only, so concurrent logging is
+    safe; each tool call records its route so the log can be regrouped.
+    """
     t = state["trace"]
     by_route: dict[str, list] = {}
     for step, decision in zip(state["plan"].steps, state["routes"]):
         by_route.setdefault(decision.route, []).append(step)
-    findings = []
-    for route, steps in by_route.items():
-        finding = t.timed(
+
+    def run(item):
+        route, steps = item
+        return t.timed(
             "specialist",
             route,
             run_specialist,
@@ -90,7 +100,17 @@ def node_specialists(state: AgentState) -> AgentState:
             steps,
             t,
         )
-        findings.append(finding)
+
+    start = time.perf_counter()
+    with ThreadPoolExecutor(max_workers=len(by_route)) as pool:
+        findings = list(pool.map(run, by_route.items()))
+    t.log(
+        "specialists",
+        "wall",
+        {"routes": list(by_route)},
+        {"parallel": len(by_route)},
+        time.perf_counter() - start,
+    )
     return {"findings": findings}
 
 

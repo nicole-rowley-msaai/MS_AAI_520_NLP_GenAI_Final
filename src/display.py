@@ -34,22 +34,31 @@ def report_markdown(report: str):
 
 
 def tool_log(trace: RunTrace) -> pd.DataFrame:
+    """Every tool call, grouped by the specialist that made it.
+
+    Specialists run in parallel, so calls arrive interleaved; a stable
+    sort on route restores one block per specialist.
+    """
     rows = []
     for e in trace.select("tool", "call"):
         rows.append(
             {
+                "route": e.input.get("route"),
                 "tool": e.input.get("tool"),
                 "args": {
                     k: v
                     for k, v in e.input.items()
-                    if k not in ("tool", "ticker")
+                    if k not in ("tool", "ticker", "route")
                 },
                 "ok": e.output.get("ok"),
                 "rows": e.output.get("rows"),
                 "error": e.output.get("error"),
             }
         )
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+    if "route" in df and df["route"].notna().any():
+        df = df.sort_values("route", kind="stable").reset_index(drop=True)
+    return df
 
 
 def routing_table(trace: RunTrace) -> pd.DataFrame:
@@ -128,6 +137,8 @@ def memory_diff(trace: RunTrace) -> pd.DataFrame:
 
 
 def timing_table(trace: RunTrace) -> pd.DataFrame:
+    """Seconds per step. 'specialist' sums the three specialists' own
+    times; 'specialists' is their wall time, since they run in parallel."""
     rows = [
         {"step": e.step, "kind": e.kind, "seconds": e.seconds}
         for e in trace.events

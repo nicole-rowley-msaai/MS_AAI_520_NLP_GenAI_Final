@@ -138,7 +138,7 @@ def wired(monkeypatch, tmp_path):
             trace.log(
                 "tool",
                 "call",
-                {"tool": name, "ticker": ticker},
+                {"tool": name, "ticker": ticker, **kw},
                 {"ok": True, "rows": 1, "error": None, "preview": {}},
             )
             or ToolResult(
@@ -192,6 +192,17 @@ def test_full_run_revises_at_least_once(wired):
     routes = {e.output["route"] for e in trace.select("router", "decision")}
     assert routes == {"earnings", "news", "market"}
 
+    # specialists ran in parallel and every tool call is tagged by route
+    wall = trace.select("specialists", "wall")[0]
+    assert wall.output["parallel"] == 3
+    tagged = {e.input.get("route") for e in trace.select("tool", "call")}
+    assert tagged == {"earnings", "news", "market"}
+    assert [f.route for f in state["findings"]] == [
+        "earnings",
+        "news",
+        "market",
+    ]
+
     assert notes.exists()
     saved = store.load_notes(notes)
     assert [n["lesson"] for n in saved] == ["Lesson A", "Lesson B"]
@@ -237,6 +248,31 @@ def test_unsupported_figures_flags_hallucinated_numbers():
         conclusion="",
     )
     assert unsupported_figures(d, f) == ["$4.20"]
+
+
+def test_unsupported_figures_skips_labelled_calculations():
+    from src.evaluation import unsupported_figures
+
+    f = [
+        Finding(
+            route="earnings",
+            summary="Revenue $215.9B, up from $130.5B.",
+            key_figures=[],
+            risks=[],
+            sources=[],
+        )
+    ]
+    d = Draft(
+        ticker="X",
+        thesis="Revenue $215.9B, a calculated ~65% increase; EPS $4.90",
+        bull_case=[],
+        bear_case=[],
+        fundamentals="",
+        news_and_catalysts="",
+        market_and_macro="",
+        conclusion="",
+    )
+    assert unsupported_figures(d, f) == ["$4.90"]
 
 
 def test_debt_to_equity_computed_from_balance_sheet():

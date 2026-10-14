@@ -52,7 +52,11 @@ def _search_filings(ticker: str, query: str, k: int = 3) -> list[dict]:
 def call_tool(
     name: str, ticker: str, trace: RunTrace | None = None, **kwargs
 ) -> ToolResult:
-    """Run one named tool for a ticker; never raises."""
+    """Run one named tool for a ticker; never raises.
+
+    `route` is accepted only so the trace can group calls by specialist;
+    it is not passed to the tool.
+    """
     company = COMPANIES.get(ticker, ticker)
     dispatch = {
         "get_price_history": lambda: _technicals(ticker),

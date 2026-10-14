@@ -49,7 +49,7 @@ def run_specialist(
 
     outputs, sources = {}, []
     for step in steps:
-        kwargs = {}
+        kwargs = {"route": route}
         if step.tool == "search_filings":
             kwargs["query"] = step.task
         result = call_tool(step.tool, ticker, trace, **kwargs)
@@ -83,7 +83,7 @@ def _news_specialist(ticker: str, trace: RunTrace) -> Finding:
     trace.log(
         "tool",
         "call",
-        {"tool": "get_news", "ticker": ticker},
+        {"tool": "get_news", "ticker": ticker, "route": "news"},
         {
             "ok": True,
             "rows": ingest.get("n", 0),

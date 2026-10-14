@@ -39,16 +39,38 @@ def score_against_findings(draft: Draft, findings: list[Finding]) -> dict:
 
 
 NUMBER = re.compile(r"\$?\d[\d,]*\.?\d*%?[BMK]?")
+DERIVED = re.compile(r"\b(calculated|derived|computed|implied)\b", re.I)
+CLAUSE_END = re.compile(r"[.;:,()\n]")
 
 
-def figures_in(text: str) -> set[str]:
-    """Numbers mentioned in a text, for the numeric spot-check."""
-    return {m.group().rstrip(".") for m in NUMBER.finditer(text)}
+def figures_in(text: str, skip_derived: bool = False) -> set[str]:
+    """Numbers mentioned in a text, for the numeric spot-check.
+
+    With skip_derived, a figure that the writer labels as calculated
+    (e.g. "a calculated ~65% increase") is left out: the evaluator asks
+    for that label, and such a figure is arithmetic on the findings, not
+    a claim that needs its own source.
+    """
+    out = set()
+    for m in NUMBER.finditer(text):
+        if skip_derived and DERIVED.search(_clause(text, m.start(), m.end())):
+            continue
+        out.add(m.group().rstrip("."))
+    return out
+
+
+def _clause(text: str, start: int, end: int) -> str:
+    """The clause around text[start:end], cut at the nearest punctuation."""
+    before = [m.end() for m in CLAUSE_END.finditer(text, 0, start)]
+    after = CLAUSE_END.search(text, end)
+    lo = before[-1] if before else 0
+    hi = after.start() if after else len(text)
+    return text[lo:hi]
 
 
 def unsupported_figures(draft: Draft, findings: list[Finding]) -> list[str]:
     """Figures in the brief that no finding supports (hallucination check)."""
-    brief = figures_in(render(draft))
+    brief = figures_in(render(draft), skip_derived=True)
     support = set()
     for f in findings:
         support |= figures_in(f.summary + " ".join(f.key_figures + f.risks))
