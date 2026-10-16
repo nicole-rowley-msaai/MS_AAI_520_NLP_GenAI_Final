@@ -17,7 +17,9 @@ TICKER_MAP_URL = "https://www.sec.gov/files/company_tickers.json"
 SUBMISSIONS_BASE = "https://data.sec.gov/submissions/"
 SUBMISSIONS_URL = SUBMISSIONS_BASE + "CIK{cik}.json"
 ARCHIVE_URL = "https://www.sec.gov/Archives/edgar/data/{cik}/{acc}/{doc}"
-INDEX_URL = "https://www.sec.gov/Archives/edgar/data/{cik}/{acc}/{acc_dash}-index.htm"
+INDEX_URL = (
+    "https://www.sec.gov/Archives/edgar/data/{cik}/{acc}/{acc_dash}-index.htm"
+)
 
 # A section shorter than this is a table-of-contents hit, not the section.
 MIN_SECTION_WORDS = 500
@@ -25,7 +27,10 @@ MIN_SECTION_WORDS = 500
 ITEM_END = r"[\.\:\-\s]"
 MDNA_HEADING = r"management[’']s discussion and analysis"
 MDNA_END = (
-    r"item\s*7a" + ITEM_END + r"|item\s*8" + ITEM_END
+    r"item\s*7a"
+    + ITEM_END
+    + r"|item\s*8"
+    + ITEM_END
     + r"|management[’']s report on internal control"
     + r"|report of independent registered public accounting firm"
 )
@@ -36,7 +41,12 @@ SECTIONS = [
     (
         "risk_factors",
         r"item\s*1a" + ITEM_END,
-        r"item\s*1b" + ITEM_END + r"|item\s*1c" + ITEM_END + r"|item\s*2" + ITEM_END,
+        r"item\s*1b"
+        + ITEM_END
+        + r"|item\s*1c"
+        + ITEM_END
+        + r"|item\s*2"
+        + ITEM_END,
     ),
     ("mdna", r"item\s*7" + ITEM_END, MDNA_END),
 ]
@@ -82,8 +92,10 @@ def _all_filings(cik: str):
         pages.append(_get(SUBMISSIONS_BASE + extra["name"]).json())
     for page in pages:
         yield from zip(
-            page["form"], page["accessionNumber"],
-            page["primaryDocument"], page["filingDate"],
+            page["form"],
+            page["accessionNumber"],
+            page["primaryDocument"],
+            page["filingDate"],
         )
 
 
@@ -151,9 +163,9 @@ def extract_section(text: str, start_pat: str, end_pat: str) -> str:
     best = ""
     starts = [m.start() for m in re.finditer(start_pat, text, flags=re.I)]
     for s in starts:
-        end = re.search(end_pat, text[s + 20:], flags=re.I)
+        end = re.search(end_pat, text[s + 20 :], flags=re.I)
         if end:
-            span = text[s:s + 20 + end.start()]
+            span = text[s : s + 20 + end.start()]
             if len(span) > len(best):
                 best = span
     return best.strip()
@@ -169,7 +181,10 @@ def extract_sections(filing: dict) -> dict[str, str]:
     out = {}
     for name, start, end in SECTIONS:
         section = extract_section(filing["text"], start, end)
-        if len(section.split()) < MIN_SECTION_WORDS and name in EXHIBIT_SECTIONS:
+        if (
+            len(section.split()) < MIN_SECTION_WORDS
+            and name in EXHIBIT_SECTIONS
+        ):
             alt_start, alt_end = EXHIBIT_SECTIONS[name]
             for text in (filing["text"], filing.get("exhibit_text", "")):
                 candidate = extract_section(text, alt_start, alt_end)
@@ -184,7 +199,10 @@ def chunk_text(text: str, size: int = 300, overlap: int = 50) -> list[str]:
     """Split into overlapping word windows (about 300 words each)."""
     words = text.split()
     step = size - overlap
-    return [" ".join(words[i:i + size]) for i in range(0, max(len(words) - overlap, 1), step)]
+    return [
+        " ".join(words[i : i + size])
+        for i in range(0, max(len(words) - overlap, 1), step)
+    ]
 
 
 def build_filing_chunks(ticker: str) -> list[dict]:
@@ -193,12 +211,14 @@ def build_filing_chunks(ticker: str) -> list[dict]:
     chunks = []
     for section, text in extract_sections(filing).items():
         for i, chunk in enumerate(chunk_text(text)):
-            chunks.append({
-                "id": f"{ticker}-{section}-{i}",
-                "text": chunk,
-                "ticker": ticker,
-                "section": section,
-                "filed": filing["filed"],
-                "url": filing["url"],
-            })
+            chunks.append(
+                {
+                    "id": f"{ticker}-{section}-{i}",
+                    "text": chunk,
+                    "ticker": ticker,
+                    "section": section,
+                    "filed": filing["filed"],
+                    "url": filing["url"],
+                }
+            )
     return chunks

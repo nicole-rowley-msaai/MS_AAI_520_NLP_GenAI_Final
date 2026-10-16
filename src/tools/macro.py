@@ -21,11 +21,17 @@ def get_macro_snapshot(start: str = MACRO_START) -> pd.DataFrame:
     for sid, label in FRED_SERIES.items():
         s = get_macro_series(sid, start)
         year_ago = s[s.index <= s.index[-1] - pd.DateOffset(years=1)]
-        rows.append({
-            "series": sid,
-            "label": label,
-            "date": s.index[-1].date(),
-            "latest": round(float(s.iloc[-1]), 3),
-            "one_year_ago": round(float(year_ago.iloc[-1]), 3) if len(year_ago) else None,
-        })
+        rows.append(
+            {
+                "series": sid,
+                "label": label,
+                "date": s.index[-1].date(),
+                "latest": round(float(s.iloc[-1]), 3),
+                "one_year_ago": (
+                    round(float(year_ago.iloc[-1]), 3)
+                    if len(year_ago)
+                    else None
+                ),
+            }
+        )
     return pd.DataFrame(rows)

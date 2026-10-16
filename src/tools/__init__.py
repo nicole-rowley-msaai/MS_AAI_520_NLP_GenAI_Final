@@ -20,6 +20,10 @@ def safe_call(tool_name: str, fn, *args, **kwargs) -> ToolResult:
     try:
         data = fn(*args, **kwargs)
         rows = len(data) if hasattr(data, "__len__") else None
-        return ToolResult(tool=tool_name, ok=True, data=data, meta={"rows": rows})
+        return ToolResult(
+            tool=tool_name, ok=True, data=data, meta={"rows": rows}
+        )
     except Exception as exc:  # noqa: BLE001 - report any tool failure
-        return ToolResult(tool=tool_name, ok=False, error=f"{type(exc).__name__}: {exc}")
+        return ToolResult(
+            tool=tool_name, ok=False, error=f"{type(exc).__name__}: {exc}"
+        )

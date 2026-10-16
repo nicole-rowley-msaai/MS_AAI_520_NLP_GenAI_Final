@@ -5,7 +5,9 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 Sentiment = Literal["positive", "neutral", "negative"]
-Topic = Literal["earnings", "m&a", "legal", "product", "macro", "management", "other"]
+Topic = Literal[
+    "earnings", "m&a", "legal", "product", "macro", "management", "other"
+]
 
 
 class Article(BaseModel):
@@ -37,18 +39,44 @@ class ClassificationBatch(BaseModel):
 
 class Extraction(BaseModel):
     id: int
-    entities: list[str] = Field(description="Companies, people, products named")
-    figures: list[str] = Field(description="Numbers with units, e.g. 'revenue $26.0B'")
-    events: list[str] = Field(description="Dated events, e.g. '2026-09-12: guidance raised'")
+    entities: list[str] = Field(
+        description="Companies, people, products named"
+    )
+    figures: list[str] = Field(
+        description="Numbers with units, e.g. 'revenue $26.0B'"
+    )
+    events: list[str] = Field(
+        description="Dated events, e.g. '2026-09-12: guidance raised'"
+    )
 
 
 class ExtractionBatch(BaseModel):
     items: list[Extraction]
 
 
-class NewsDigest(BaseModel):
+class NewsDigestDraft(BaseModel):
+    """What the summarizer model writes. OpenAI strict mode accepts only
+    required fields of plain types, so the counted fields live in the
+    subclass below and are filled in by the chain."""
+
     ticker: str
     net_sentiment: Sentiment
-    top_drivers: list[str] = Field(description="3-5 key drivers, each citing article ids")
+    top_drivers: list[str] = Field(
+        description="3-5 key drivers, each citing article ids"
+    )
     risks: list[str]
     summary: str = Field(description="One short paragraph")
+
+
+class SentimentCounts(BaseModel):
+    positive: int = 0
+    neutral: int = 0
+    negative: int = 0
+
+
+class NewsDigest(NewsDigestDraft):
+    sentiment_counts: SentimentCounts = Field(
+        default_factory=SentimentCounts,
+        description="Articles per label among the relevant items; counted "
+        "by the chain, not judged by the model",
+    )

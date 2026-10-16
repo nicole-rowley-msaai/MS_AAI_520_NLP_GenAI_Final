@@ -9,7 +9,11 @@ import re
 from datetime import datetime, timedelta, timezone
 
 from src.chains.schemas import (
-    Article, ClassificationBatch, ExtractionBatch, NewsDigest,
+    Article,
+    ClassificationBatch,
+    ExtractionBatch,
+    NewsDigest,
+    NewsDigestDraft,
 )
 from src.config import MODELS, NEWS_LOOKBACK_DAYS
 from src.llm import structured
@@ -47,13 +51,21 @@ def _is_recent(published: str, days: int) -> bool:
 
 
 def preprocess(
-    articles: list[Article], company: str, ticker: str, days: int = NEWS_LOOKBACK_DAYS,
+    articles: list[Article],
+    company: str,
+    ticker: str,
+    days: int = NEWS_LOOKBACK_DAYS,
 ) -> list[Article]:
-    """Strip HTML, drop duplicates, keep recent items that mention the company."""
+    """Strip HTML, drop duplicates, keep recent items naming the company."""
     name_tokens = {company.lower(), ticker.lower(), company.split()[0].lower()}
     seen, kept = set(), []
     for a in articles:
-        a = a.model_copy(update={"title": _strip(a.title), "description": _strip(a.description)})
+        a = a.model_copy(
+            update={
+                "title": _strip(a.title),
+                "description": _strip(a.description),
+            }
+        )
         key = _norm_title(a.title)
         text = f"{a.title} {a.description}".lower()
         if not a.title or key in seen:
@@ -79,19 +91,23 @@ CLASSIFY_SYSTEM = (
     f"topic, its sentiment, and its relevance. {SENTIMENT_RULE} Relevance is "
     "low ONLY for market roundups, daily summaries, or lists that cover many "
     "companies. News about the company's products, customers, partners, "
-    "suppliers, or share price is high, even if another company is named first."
+    "suppliers, or share price is high, even if another company is named "
+    "first."
 )
 
 # Benchmark: sentiment only. The Kaggle headlines have no target company, so
 # the relevance instruction would only distract from the graded task.
 CLASSIFY_SENTIMENT_SYSTEM = (
     "You label financial news headlines for an equity analyst. For each item "
-    f"return its topic and its sentiment. {SENTIMENT_RULE} Set relevance to high."
+    f"return its topic and its sentiment. {SENTIMENT_RULE} "
+    "Set relevance to high."
 )
 
 
 def _fmt(items: list[Article]) -> str:
-    return "\n".join(f"[{a.id}] {a.title}. {a.description}".strip() for a in items)
+    return "\n".join(
+        f"[{a.id}] {a.title}. {a.description}".strip() for a in items
+    )
 
 
 def classify(
@@ -105,7 +121,7 @@ def classify(
     """
     out = {}
     for i in range(0, len(articles), BATCH):
-        batch = articles[i:i + BATCH]
+        batch = articles[i : i + BATCH]
         res = structured(model, system, _fmt(batch), ClassificationBatch)
         out.update({c.id: c.model_dump() for c in res.items})
     return out
@@ -114,14 +130,17 @@ def classify(
 # 4. Extract --------------------------------------------------------------
 EXTRACT_SYSTEM = (
     "Extract facts from each news item. Only include what the text states; "
-    "never infer numbers. Give figures with units and events with dates when given."
+    "never infer numbers. Give figures with units and events with dates "
+    "when given."
 )
 
 
-def extract(articles: list[Article], model: str = MODELS["chain"]) -> dict[int, dict]:
+def extract(
+    articles: list[Article], model: str = MODELS["chain"]
+) -> dict[int, dict]:
     out = {}
     for i in range(0, len(articles), BATCH):
-        batch = articles[i:i + BATCH]
+        batch = articles[i : i + BATCH]
         res = structured(model, EXTRACT_SYSTEM, _fmt(batch), ExtractionBatch)
         out.update({e.id: e.model_dump() for e in res.items})
     return out
@@ -130,28 +149,66 @@ def extract(articles: list[Article], model: str = MODELS["chain"]) -> dict[int, 
 # 5. Summarize ------------------------------------------------------------
 SUMMARIZE_SYSTEM = (
     "Write a news digest for an equity analyst from the labeled, extracted "
-    "items below. Cite article ids like [3] for every driver and risk."
+    "items below. Cite article ids like [3] for every driver and risk. "
+    "The net sentiment is given; it is the majority label over the "
+    "relevant articles, so use it as stated and explain it in the summary."
 )
+
+NET_MARGIN = 0.15  # positive/negative needs this share-lead over the other
+
+
+def sentiment_counts(labels: dict, articles: list[Article]) -> dict:
+    counts = {"positive": 0, "neutral": 0, "negative": 0}
+    for a in articles:
+        counts[labels.get(a.id, {}).get("sentiment", "neutral")] += 1
+    return counts
+
+
+def net_sentiment(counts: dict) -> str:
+    """Majority rule with a margin, so a 40/38 split is called neutral."""
+    n = sum(counts.values()) or 1
+    lead = (counts["positive"] - counts["negative"]) / n
+    if lead > NET_MARGIN:
+        return "positive"
+    if lead < -NET_MARGIN:
+        return "negative"
+    return "neutral"
 
 
 def summarize(
-    ticker: str, articles: list[Article], labels: dict, facts: dict,
+    ticker: str,
+    articles: list[Article],
+    labels: dict,
+    facts: dict,
     model: str = MODELS["chain"],
 ) -> NewsDigest:
     lines = []
     for a in articles:
         lab, fx = labels.get(a.id, {}), facts.get(a.id, {})
         lines.append(
-            f"[{a.id}] {a.title} | topic={lab.get('topic')} sentiment={lab.get('sentiment')} "
+            f"[{a.id}] {a.title} | topic={lab.get('topic')} "
+            f"sentiment={lab.get('sentiment')} "
             f"| figures={fx.get('figures')} events={fx.get('events')}"
         )
-    user = f"Ticker: {ticker}\n\n" + "\n".join(lines)
-    return structured(model, SUMMARIZE_SYSTEM, user, NewsDigest)
+    counts = sentiment_counts(labels, articles)
+    net = net_sentiment(counts)
+    user = (
+        f"Ticker: {ticker}\nSentiment counts: {counts}\n"
+        f"Net sentiment: {net}\n\n" + "\n".join(lines)
+    )
+    draft = structured(model, SUMMARIZE_SYSTEM, user, NewsDigestDraft)
+    return NewsDigest(
+        **{**draft.model_dump(), "net_sentiment": net},  # counted, not judged
+        sentiment_counts=counts,
+    )
 
 
 # Full chain --------------------------------------------------------------
-def run_news_chain(ticker: str, company: str, trace: list | None = None) -> NewsDigest:
+def run_news_chain(
+    ticker: str, company: str, trace: list | None = None
+) -> NewsDigest:
     """Run all five steps; append each step's output to `trace` if given."""
+
     def log(step, data):
         if trace is not None:
             trace.append({"step": step, "output": data})
@@ -161,11 +218,18 @@ def run_news_chain(ticker: str, company: str, trace: list | None = None) -> News
     clean = preprocess(raw, company, ticker)
     log("preprocess", {"n_in": len(raw), "n_out": len(clean)})
     if not clean:
-        return NewsDigest(ticker=ticker, net_sentiment="neutral", top_drivers=[],
-                          risks=[], summary="No recent relevant news found.")
+        return NewsDigest(
+            ticker=ticker,
+            net_sentiment="neutral",
+            top_drivers=[],
+            risks=[],
+            summary="No recent relevant news found.",
+        )
     labels = classify(clean)
     log("classify", labels)
-    relevant = [a for a in clean if labels.get(a.id, {}).get("relevance") == "high"]
+    relevant = [
+        a for a in clean if labels.get(a.id, {}).get("relevance") == "high"
+    ]
     log("relevance_filter", {"n_in": len(clean), "n_out": len(relevant)})
     if not relevant:
         relevant = clean  # better a noisy digest than an empty one
