@@ -64,7 +64,7 @@ def renumber(section: list[dict], part: str) -> list[dict]:
 
 TITLE = f"""# EquityAgent: An Autonomous Agentic Workflow for Investment Research
 
-**GitHub repository:** {REPO_URL} (branch `agent`)
+**GitHub repository:** {REPO_URL} (branch `main`)
 
 MS in Applied AI, University of San Diego. AAI-520: NLP and Generative AI,
 final project.
@@ -106,11 +106,11 @@ REPO_URL = (
 if os.path.isdir(os.path.join(REPO, ".git")):
     !git -C {REPO} pull -q
 else:
-    !git clone -q --branch agent {REPO_URL} {REPO}
+    !git clone -q --branch main {REPO_URL} {REPO}
 %cd {REPO}
 sys.path.insert(0, REPO)
 
-SKIP = "google-adk\\|dependency resolver"
+SKIP = r"google-adk\\|dependency resolver"
 !pip install -q -r requirements.txt 2>&1 | grep -v "{SKIP}"
 
 SECRET_KEYS = [
@@ -167,8 +167,10 @@ The agent's tools and the news prompt chain are built and tested before
 the agent uses them. This part checks each data source (yfinance, FRED,
 NewsAPI, SEC EDGAR), explores the Kaggle financial-news dataset used to
 benchmark the sentiment classifier, and compares the LLM classifier with
-a keyword baseline. Every tool call goes through `safe_call`, so a failed
-API shows as `ok=False` instead of stopping the notebook.
+a keyword baseline and a supervised TF-IDF baseline, with zero-shot and
+few-shot prompts, broken down by annotator agreement. Every tool call
+goes through `safe_call`, so a failed API shows as `ok=False` instead of
+stopping the notebook.
 """
 
 PART_B = """# Part B. Agent run
@@ -250,7 +252,7 @@ SUMMARY = """## Summary
 """
 
 # 01: data check, Kaggle EDA, classifier evaluation (after its setup)
-part_a = renumber(cells(NB1, 4, 19), "A")  # 01's chain demo = B5
+part_a = renumber(cells(NB1, 4, 23), "A")  # 01's chain demo = B5
 
 # 02: smoke test through memory (after its setup); the smoke-test heading
 # in 02 carries the assignment heading, which Part A now owns.
