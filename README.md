@@ -43,6 +43,7 @@ Ticker ─► Planner ◄── memory/notes.json
 | FRED API | CPI, Fed funds rate, 10-year yield, unemployment, GDP |
 | NewsAPI | Live headlines for the news chain |
 | Kaggle: [Sentiment Analysis for Financial News](https://www.kaggle.com/datasets/ankurzing/sentiment-analysis-for-financial-news) | 4,846 labeled headlines; test set for the classify step |
+| Financial PhraseBank v1.0 (Malo et al., 2014), in `data/kaggle/FinancialPhraseBank/` | Same sentences grouped by annotator agreement; used to break down classifier accuracy (CC BY-NC-SA 3.0) |
 
 ## Models
 
@@ -71,11 +72,14 @@ equity-agent/
 │   ├── llm.py        structured() for OpenAI and Anthropic
 │   └── config.py     model names, tickers, settings
 ├── notebooks/
-│   ├── 01_data_and_nlp_starter.ipynb   data tools, Kaggle EDA, news chain
-│   └── 02_agent_run.ipynb              full agent run + evaluation
+│   ├── 01_data_and_nlp_starter.ipynb   data tools, Kaggle EDA, classifier
+│   │                                   diagnostics, news chain
+│   ├── 02_agent_run.ipynb              full agent run + evaluation
+│   └── build_final.py                  builds final_project.ipynb from 01 + 02
 ├── memory/notes.json
 ├── runs/           saved trace per run
-├── data/           cache + Kaggle sample (large files gitignored)
+├── data/           cache, Kaggle CSV (gitignored), FinancialPhraseBank/
+├── docs/nlp_track.md  NLP-track design notes, offline results, references
 └── tests/
 ```
 
