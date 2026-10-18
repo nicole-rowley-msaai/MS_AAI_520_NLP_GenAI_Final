@@ -46,50 +46,71 @@ track:
 | Notebook 01: new section on classifier diagnostics; removed the `git config` lines that made every Colab commit appear as one teammate | `notebooks/01_data_and_nlp_starter.ipynb` | Collaboration is measured through GitHub |
 | Final notebook builder includes the new section, clones `main` instead of `agent`, and fixes the `SyntaxWarning` in the setup cell | `notebooks/build_final.py` | `main` is where the merged work now lives |
 
-## Offline results (no API calls)
+## Results: full run of October 18, 2026
 
-Run on the PhraseBank 50%-agreement file, which holds the same 4,846
-sentences as the Kaggle CSV.
+The final notebook was run end to end in Colab on branch `nlp-track-ashley`
+with the agent and evaluator code unchanged. The executed copy is
+`notebooks/final_project_run_2026-10-18_nlp-track.ipynb`; it ran with no
+errors and every tool call succeeded.
 
 **Cleaning.** 8 exact duplicates, 11 duplicates after normalization, and
 2 sentences that appear with two different labels. Cleaning keeps 4,833
 rows (the previous exact-match rule kept 4,838). The stratified test set
-has 300 rows: 178 neutral, 84 positive, 38 negative. Because five more
-rows are removed, the test set differs slightly from the October 14 run,
-so every classifier must be rerun on it.
+has 300 rows: 178 neutral, 84 positive, 38 negative.
 
-**Baselines on the test set.**
+**Classifiers on the test set (notebook sections A3 and A4).**
 
-| Classifier | Accuracy | Macro-F1 |
+| Classifier | Accuracy (mean of 3) | Macro-F1 (mean of 3) | Accuracy (vote) | Macro-F1 (vote) |
+|---|---|---|---|---|
+| Keyword regex | 0.687 | 0.575 | | |
+| TF-IDF + logistic regression | 0.793 | 0.771 | | |
+| LLM zero-shot | 0.834 | 0.838 | 0.840 | 0.843 |
+| LLM few-shot | 0.827 | 0.833 | 0.840 | 0.850 |
+
+The zero-shot LLM leads the supervised baseline by about four points of
+accuracy and seven of macro-F1. Neutral recall rose from 0.72 (October 14
+run) to 0.85, negative precision from 0.71 to 0.90, and positive precision
+from 0.69 to 0.75. That gain combines the guideline-based sentiment
+definition with the cleaning, which changed the test sample slightly.
+Few-shot demonstrations did not help; the majority vote helped slightly.
+
+**Accuracy by annotator agreement.**
+
+| Agreement band | Test sentences | TF-IDF + LR | LLM zero-shot (vote) | LLM few-shot (vote) |
+|---|---|---|---|---|
+| 100% | 149 | 0.899 | 0.946 | 0.960 |
+| 75-99% | 71 | 0.775 | 0.887 | 0.859 |
+| 66-74% | 42 | 0.762 | 0.714 | 0.762 |
+| 50-65% | 38 | 0.447 | 0.474 | 0.421 |
+
+Every classifier falls to roughly 45% where only 50-65% of annotators
+agreed, so that band is a ceiling set by the labels.
+
+**Impact on the agent (October 14 on `main` against October 18).**
+
+| Measure | Oct 14 | Oct 18 |
 |---|---|---|
-| Keyword regex | 0.687 | 0.575 |
-| TF-IDF + logistic regression (train split) | 0.793 | 0.771 |
-| LLM zero-shot, October 14 run (earlier, near-identical split) | 0.804 | 0.810 |
+| NVDA news window | newest items; first five within 40 minutes | Sep 18 to Oct 16 |
+| NVDA labels, positive / neutral / negative | 61 / 15 / 10, net positive | 19 / 60 / 13, net neutral |
+| News items left unlabeled | not tracked | 0 of 95 |
+| NVDA evaluator loop | 3.6 to 4.6 | 4.2 to 4.6 |
+| Agent final score, NVDA / JPM / XOM | 4.4 / 4.4 / 4.6 | 4.4 / 4.4 / 4.4 |
+| Single-prompt baseline, NVDA / JPM / XOM | 2.2 / 1.8 / 2.0 | 2.0 / 1.8 / 1.8 |
+| Unsupported figures in agent briefs | 1 / 5 / 3 | 11 / 3 / 13 |
+| Memory off to on | 4.4 to 4.4 | 4.2 to 4.4 |
+| Specialists, summed / wall time | 201 s / 170 s | 90 s / 57 s |
 
-The supervised baseline is within about one point of the LLM on accuracy;
-the LLM's advantage is mostly macro-F1, that is, the minority classes.
-
-**Accuracy by annotator agreement (TF-IDF + logistic regression).**
-
-| Agreement band | Test sentences | Accuracy | Macro-F1 |
-|---|---|---|---|
-| 100% | 149 | 0.899 | 0.882 |
-| 75-99% | 71 | 0.775 | 0.662 |
-| 66-74% | 42 | 0.762 | 0.771 |
-| 50-65% | 38 | 0.447 | 0.396 |
-
-Accuracy falls steeply where the annotators disagreed. The notebook
-computes the same table for the zero-shot and few-shot LLM runs.
-
-## To do in Colab before submission
-
-1. Rerun the final notebook top to bottom. If an existing Drive clone is
-   on the `agent` branch, run `git -C /content/drive/MyDrive/equity-agent
-   checkout main` first.
-2. Update the notebook's Summary table row for sentiment classification
-   with the new A3 and A4 numbers.
-3. Report whether few-shot prompting and the majority vote changed neutral
-   recall, and whether the live NVDA sentiment counts moved.
+- Agent scores moved by at most 0.2, within the evaluator's run-to-run
+  variation: the NLP changes alter the findings without measurably
+  changing how briefs are judged.
+- The NVDA sentiment flip has two causes this run cannot separate: the
+  new sentiment definition and a four-week news window.
+- The unsupported-figure count is an exact string match. Traceable cases
+  in the B8 brief are rounding ($215.9B for $215.94B), units ($150B for
+  "$150 billion"), or unlabeled calculations (CPI up 3.72% year over
+  year). A figure-by-figure check of the C1 briefs is still open.
+- Wall time fell by about two thirds with a similar number of headlines,
+  consistent with concurrent classify and extract batches.
 
 ## Limitations
 

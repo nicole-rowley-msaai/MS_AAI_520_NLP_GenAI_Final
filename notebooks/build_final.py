@@ -98,27 +98,34 @@ from google.colab import drive, userdata
 os.chdir("/content")
 drive.mount("/content/drive")
 
+# To test a pull request, set BRANCH to its branch and REPO to a separate
+# Drive folder, so the team's working copy is not touched.
+BRANCH = "main"
 REPO = "/content/drive/MyDrive/equity-agent"
-REPO_URL = (
-    f"https://{userdata.get('GITHUB_TOKEN')}@github.com/"
-    "nicole-rowley-msaai/MS_AAI_520_NLP_GenAI_Final.git"
-)
+REPO_URL = "https://github.com/nicole-rowley-msaai/MS_AAI_520_NLP_GenAI_Final.git"
+
 if os.path.isdir(os.path.join(REPO, ".git")):
+    !git -C {REPO} fetch -q origin
+    !git -C {REPO} checkout -q {BRANCH}
     !git -C {REPO} pull -q
 else:
-    !git clone -q --branch main {REPO_URL} {REPO}
+    !git clone -q --branch {BRANCH} {REPO_URL} {REPO}
 %cd {REPO}
 sys.path.insert(0, REPO)
+!git log -1 --format='%h %an  %s'
 
 SKIP = r"google-adk\\|dependency resolver"
 !pip install -q -r requirements.txt 2>&1 | grep -v "{SKIP}"
 
+# Kaggle: newer accounts issue one KAGGLE_API_TOKEN; older ones use
+# KAGGLE_USERNAME + KAGGLE_KEY. Either set is enough.
 SECRET_KEYS = [
     "OPENAI_API_KEY",
     "ANTHROPIC_API_KEY",
     "FRED_API_KEY",
     "NEWSAPI_KEY",
     "EDGAR_USER_AGENT",
+    "KAGGLE_API_TOKEN",
     "KAGGLE_USERNAME",
     "KAGGLE_KEY",
 ]
