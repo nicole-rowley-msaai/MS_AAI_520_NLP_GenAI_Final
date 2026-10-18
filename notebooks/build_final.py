@@ -328,6 +328,8 @@ final = {
 from notebook_evaluation_integration import enhance_final_notebook
 
 final = enhance_final_notebook(final)
+from notebook_publication_polish import polish_final_notebook
+final = polish_final_notebook(final)
 out = HERE / "final_project.ipynb"
 out.write_text(json.dumps(final, indent=1, ensure_ascii=False) + "\n")
 print(f"wrote {out} with {len(final['cells'])} cells")
