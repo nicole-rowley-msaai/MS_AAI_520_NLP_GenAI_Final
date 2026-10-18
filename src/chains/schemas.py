@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 Sentiment = Literal["positive", "neutral", "negative"]
 Topic = Literal[
@@ -48,6 +48,19 @@ class Extraction(BaseModel):
     events: list[str] = Field(
         description="Dated events, e.g. '2026-09-12: guidance raised'"
     )
+
+    @field_validator("figures")
+    @classmethod
+    def _figures_have_numbers(cls, figures: list[str]) -> list[str]:
+        """Keep only items that contain a digit.
+
+        A figure is a number token such as a price or percentage, which
+        tokenizers keep whole (Jurafsky & Martin, 2026, Section 2.5.1).
+        Phrases like "dozens of AAA games" are not figures. The validator
+        runs after parsing, so the JSON schema sent to the model is
+        unchanged.
+        """
+        return [f for f in figures if any(ch.isdigit() for ch in f)]
 
 
 class ExtractionBatch(BaseModel):
