@@ -12,6 +12,13 @@ from typing import TypedDict
 from langgraph.graph import END, StateGraph
 
 from src.agents import evaluator as ev
+from src.agents.evaluation_lead import QualityPolicy
+from src.agents.evaluation_pipeline import (
+    NumericPolicy,
+    ReviewedEvaluationSession,
+    numeric_feedback,
+)
+from src.agents.numeric_validation import NumericAudit, audit_numeric_claims
 from src.agents.planner import make_plan
 from src.agents.router import route_step
 from src.agents.schemas import (
@@ -46,6 +53,12 @@ class AgentState(TypedDict, total=False):
     reflection: Reflection
     new_notes: list[dict]
     report: str
+    reviewed_evaluation: bool
+    review_session: ReviewedEvaluationSession
+    numeric_audit: NumericAudit
+    accepted: bool
+    stop_reason: str
+    selected_iteration: int
 
 
 # Nodes ----------------------------------------------------------------------
@@ -119,7 +132,18 @@ def node_synthesize(state: AgentState) -> AgentState:
     draft = t.timed(
         "synthesizer", "draft", synthesize, state["ticker"], state["findings"]
     )
-    return {"draft": draft, "iteration": 0, "history": []}
+    updates: AgentState = {"draft": draft, "iteration": 0, "history": []}
+    if state.get("reviewed_evaluation", False):
+        # Use nonblocking rules for claims the narrow parser cannot recognize.
+        # Explicit contradictions still prevent acceptance.
+        updates["review_session"] = ReviewedEvaluationSession(
+            quality_policy=QualityPolicy(),
+            numeric_policy=NumericPolicy(
+                require_recognized_claims=False,
+                reject_unverified=False,
+            ),
+        )
+    return updates
 
 
 def node_evaluate(state: AgentState) -> AgentState:
@@ -127,20 +151,56 @@ def node_evaluate(state: AgentState) -> AgentState:
     evaluation = t.timed(
         "evaluator", "scores", ev.evaluate, state["draft"], state["findings"]
     )
-    history = state["history"] + [
-        {
-            "iteration": state["iteration"],
-            "average": evaluation.average,
-            "scores": {c: getattr(evaluation, c) for c in ev.CRITERIA},
-            "critiques": evaluation.critiques,
-        }
-    ]
-    return {"evaluation": evaluation, "history": history}
+    row = {
+        "iteration": state["iteration"],
+        "average": evaluation.average,
+        "scores": {c: getattr(evaluation, c) for c in ev.CRITERIA},
+        "critiques": evaluation.critiques,
+    }
+    updates: AgentState = {"evaluation": evaluation}
+    if state.get("reviewed_evaluation", False):
+        audit = audit_numeric_claims(state["draft"], state["findings"])
+        candidate = state["review_session"].record(
+            state["draft"], evaluation, audit
+        )
+        row.update(
+            {
+                "accepted": candidate.passed,
+                "failures": list(candidate.failures),
+                "numeric_checked": len(audit.checks),
+                "numeric_contradicted": len(audit.contradictions),
+                "numeric_unverified": len(audit.unverified),
+            }
+        )
+        updates["numeric_audit"] = audit
+        updates["review_session"] = state["review_session"]
+        t.log(
+            "evaluator", "numeric_audit",
+            {"iteration": state["iteration"]}, audit.rows(),
+        )
+    updates["history"] = state["history"] + [row]
+    return updates
 
 
 def should_refine(state: AgentState) -> str:
     # Every draft gets at least MIN_ITERATIONS rounds of critique and
     # revision; after that the loop stops as soon as the score passes.
+    if state.get("reviewed_evaluation", False):
+        session = state["review_session"]
+        refine = session.should_refine()
+        any_passed = any(candidate.passed for candidate in session.candidates)
+        outcome = "refine" if refine else "pass" if any_passed else "exhausted"
+        state["trace"].log(
+            "evaluator", "gate",
+            {
+                "average": state["evaluation"].average,
+                "iteration": state["iteration"],
+                "failures": list(session.candidates[-1].failures),
+            },
+            outcome,
+        )
+        return "refine" if refine else "finish"
+
     done_minimum = state["iteration"] >= ev.MIN_ITERATIONS
     passed = done_minimum and (
         state["evaluation"].average >= ev.PASS_THRESHOLD
@@ -160,25 +220,68 @@ def should_refine(state: AgentState) -> str:
 
 def node_optimize(state: AgentState) -> AgentState:
     t = state["trace"]
+    feedback = state["evaluation"]
+    if state.get("reviewed_evaluation", False):
+        feedback = feedback.model_copy(deep=True)
+        feedback.critiques.extend(numeric_feedback(state["numeric_audit"]))
     draft = t.timed(
         "optimizer",
         "revision",
         ev.optimize,
         state["draft"],
-        state["evaluation"],
+        feedback,
         state["findings"],
     )
+    if draft.ticker != state["draft"].ticker:
+        raise ValueError("optimizer changed the stock ticker")
     return {"draft": draft, "iteration": state["iteration"] + 1}
 
 
 def node_reflect(state: AgentState) -> AgentState:
     t = state["trace"]
+    updates: AgentState = {}
+    selected_draft = state["draft"]
+    if state.get("reviewed_evaluation", False):
+        outcome = state["review_session"].finish()
+        selected_draft = outcome.draft
+        updates.update(
+            {
+                "draft": selected_draft,
+                "evaluation": outcome.evaluation,
+                "numeric_audit": outcome.audit,
+                "accepted": outcome.accepted,
+                "stop_reason": outcome.stop_reason,
+                "selected_iteration": outcome.selected_iteration,
+                "history": [
+                    {
+                        **row,
+                        "selected": (
+                            row["iteration"] == outcome.selected_iteration
+                        ),
+                    }
+                    for row in state["history"]
+                ],
+            }
+        )
+        t.log(
+            "evaluator", "selection",
+            {"evaluated": len(outcome.history)},
+            {
+                "selected_iteration": outcome.selected_iteration,
+                "accepted": outcome.accepted,
+                "stop_reason": outcome.stop_reason,
+                "average": outcome.evaluation.average,
+                "numeric_checked": len(outcome.audit.checks),
+                "numeric_unverified": len(outcome.audit.unverified),
+                "numeric_contradicted": len(outcome.audit.contradictions),
+            },
+        )
     tool_log = [e.output for e in t.select("tool", "call")]
     reflection = t.timed(
         "reflection",
         "self_review",
         ev.reflect,
-        state["draft"],
+        selected_draft,
         state["findings"],
         tool_log,
     )
@@ -188,11 +291,28 @@ def node_reflect(state: AgentState) -> AgentState:
             state["ticker"], state.get("sector"), reflection.lessons
         )
     t.log("memory", "write", reflection.lessons, new_notes)
-    return {
-        "reflection": reflection,
-        "new_notes": new_notes,
-        "report": render(state["draft"]),
-    }
+    report = render(selected_draft)
+    if state.get("reviewed_evaluation", False):
+        if not updates["accepted"]:
+            report = (
+                "> **Evaluation not accepted:** The available drafts did not "
+                "meet all quality and numerical checks. Manual review is "
+                "required.\n\n" + report
+            )
+        elif not updates["numeric_audit"].checks:
+            report = (
+                "> **Numeric coverage warning:** No financial claims matched "
+                "the limited numeric parser. This is not evidence of numeric "
+                "accuracy.\n\n" + report
+            )
+    updates.update(
+        {
+            "reflection": reflection,
+            "new_notes": new_notes,
+            "report": report,
+        }
+    )
+    return updates
 
 
 # Graph ----------------------------------------------------------------------
@@ -223,15 +343,22 @@ GRAPH = build_graph()
 
 
 def run_agent(
-    ticker: str, use_memory: bool = True, save: bool = True
+    ticker: str,
+    use_memory: bool = True,
+    save: bool = True,
+    reviewed_evaluation: bool = False,
 ) -> tuple[str, RunTrace, AgentState]:
-    """Research one ticker. Returns (report markdown, trace, final state)."""
+    """Research one ticker; opt into the enhanced evaluator when requested.
+
+    Keep the original behavior by default for reproducible comparisons.
+    """
     trace = RunTrace(ticker=ticker.upper())
     final = GRAPH.invoke(
         {
             "ticker": ticker.upper(),
             "use_memory": use_memory,
             "trace": trace,
+            "reviewed_evaluation": reviewed_evaluation,
         }
     )
     if save:
