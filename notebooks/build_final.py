@@ -7,6 +7,9 @@ assignment asks for. Run from the repo root:
     python notebooks/build_final.py
 
 The result has no outputs; run it top to bottom in Colab and export.
+
+Imports notebook_evaluation_integration.py to preserve the combined
+Evaluation Lead experiment when this builder is rerun.
 """
 
 import json
@@ -322,6 +325,9 @@ final = {
     ],
 }
 
+from notebook_evaluation_integration import enhance_final_notebook
+
+final = enhance_final_notebook(final)
 out = HERE / "final_project.ipynb"
 out.write_text(json.dumps(final, indent=1, ensure_ascii=False) + "\n")
 print(f"wrote {out} with {len(final['cells'])} cells")
