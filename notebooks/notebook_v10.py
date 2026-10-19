@@ -1,4 +1,4 @@
-"""v10 pass for the EquityAgent final notebook (Revision 2).
+"""v10 pass for the EquityAgent final notebook.
 
 Runs last in build_final.py. It adds an evidence-matched baseline to C1:
 a single-pass brief written from the *same findings* the agent used,
@@ -8,6 +8,11 @@ graded by the same evaluator against the same findings
 measures the value of evidence plus workflow; the matched baseline
 isolates what planning, revision and the quality gate add on top of the
 evidence.
+
+It adds section B6b for the data verification specialist
+(``src/agents/verifier.py``), puts it in the Part B diagram and table,
+reports its counts per ticker in C1, and notes its scope under
+limitations.
 
 It also points the setup cell at ``main``, so a fresh Colab run executes
 the revised code rather than the old integration branch.
@@ -30,6 +35,11 @@ def _text(cell: dict) -> str:
 def _code(content: str) -> dict:
     return {"cell_type": "code", "metadata": {}, "source": content,
             "outputs": [], "execution_count": None,
+            "id": hashlib.sha256(content.encode("utf-8")).hexdigest()[:12]}
+
+
+def _markdown(content: str) -> dict:
+    return {"cell_type": "markdown", "metadata": {}, "source": content,
             "id": hashlib.sha256(content.encode("utf-8")).hexdigest()[:12]}
 
 
@@ -75,6 +85,50 @@ display(Markdown(
     "statistically established."
 ))
 '''
+
+OLD_DIAGRAM = """Ticker → Plan → Route → Specialists → Synthesize → Evaluate
+                                                 ↓       ↑
+                                              Refine → Optimize
+                                                 |
+                                            Final selection
+                                                 ↓
+                                          Reflect → Memory"""
+
+NEW_DIAGRAM = """Ticker → Plan → Route → Specialists → Verify → Synthesize → Evaluate ⇄ Optimize
+                                                                 |
+                                                          Final selection
+                                                                 ↓
+                                                         Reflect → Memory"""
+
+B6B_TEXT = """## B6b. Data verification specialist
+
+Before any brief is written, a separate verification agent
+(`src/agents/verifier.py`) re-reads the raw tool output the specialists
+received and checks every financial figure in their findings. A figure is
+**confirmed** if it equals a raw value, or one computed from raw values
+(year-over-year change, margin, ratio as a percent, macro change), at the
+precision written; **contradicted** if the finding names a metric and fiscal
+year whose raw value differs; and **not found** otherwise, which flags it
+for attribution rather than proving it wrong.
+
+The agent is rule-based, so its checks are reproducible and independent of
+the models that wrote the findings. Its corrections and flags travel with
+the findings to the synthesizer and the evaluator. News findings summarize
+article text, which the verifier does not hold, so they are not checked."""
+
+B6B_CODE = r"""# Data verification specialist: each finding checked against raw tool data.
+verification = pd.DataFrame(state["verification"])
+display(verification[["route", "status", "checked", "confirmed",
+                      "not_found", "contradicted"]])
+for row in state["verification"]:
+    if row["corrections"]:
+        print(f"{row['route']} corrections: {row['corrections']}")
+    if row["not_found_figures"]:
+        print(f"{row['route']} not found in raw data: "
+              f"{row['not_found_figures']}")
+    if row["note"]:
+        print(f"{row['route']}: {row['note']}")
+"""
 
 
 def finalize_v10(notebook: dict) -> dict:
@@ -145,6 +199,38 @@ def finalize_v10(notebook: dict) -> dict:
              '    ("agent_final", "agent, final", "#3b6fb6", 1.5 * w),\n')
     _replace(cells, PLOT_CELL, '"Rubric comparison: no-tools baseline and integrated agent"',
              '"Rubric comparison: baselines and integrated agent"')
+
+    # Data verification specialist between the specialists and synthesis.
+    part_b = "# Part B. Autonomous research workflow"
+    _replace(cells, part_b, OLD_DIAGRAM, NEW_DIAGRAM)
+    _replace(cells, part_b, "| Report generation | `src/agents/synthesizer.py` |",
+             "| Data verification | `src/agents/verifier.py` | Figures "
+             "confirmed, corrected or flagged against raw tool data |\n"
+             "| Report generation | `src/agents/synthesizer.py` |")
+    b6 = _locate(cells, "show.findings_table(trace)")
+    cells[b6 + 1:b6 + 1] = [_markdown(B6B_TEXT), _code(B6B_CODE)]
+    _replace(cells, C1_CELL, '            "tool_success": tool_success_rate(tr),\n',
+             '            "tool_success": tool_success_rate(tr),\n'
+             '            "figures_checked": sum(\n'
+             '                r["checked"] for r in st["verification"]\n'
+             "            ),\n"
+             '            "figures_confirmed": sum(\n'
+             '                r["confirmed"] for r in st["verification"]\n'
+             "            ),\n"
+             '            "figures_corrected": sum(\n'
+             '                r["contradicted"] for r in st["verification"]\n'
+             "            ),\n")
+    _replace(cells, C1_CELL, '"unsupported_agent", "tool_success"]])',
+             '"unsupported_agent", "tool_success"]])\n'
+             'display(results[["ticker", "figures_checked", '
+             '"figures_confirmed",\n'
+             '                 "figures_corrected"]])')
+    _replace(cells, "## C3. Limitations", "- **Comparison scope.**",
+             "- **Verification scope.** The verification specialist checks "
+             "figures against\n  the raw tool data, not the companies' "
+             "published filings. A figure it\n  cannot find may still be "
+             "correct, and news figures are not checked.\n"
+             "- **Comparison scope.**")
 
     cells.insert(plot + 1, _code(MATCHED_SUMMARY))
     return notebook
