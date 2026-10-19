@@ -8,7 +8,10 @@ each finding states:
 - **confirmed**: the figure equals a raw value from any tool in the run,
   or a value computed from raw values (year-over-year change, margin,
   percentage form of a ratio, macro change), at the precision it is
-  written ("$215.9B" confirms $215,938M);
+  written ("$215.9B" confirms $215,938M). A figure with a magnitude word
+  also matches a raw value equal to its written number, for sources that
+  already report in that scale (FRED real GDP 24408.011, in billions,
+  confirms "$24,408.011B");
 - **contradicted**: the finding names a metric and fiscal year the raw
   data has, and the value differs beyond rounding;
 - **not found**: no raw or computed value matches. This is not proof of
@@ -73,6 +76,12 @@ class Figure:
     value: float  # absolute value in base units ($, %, x or bps)
     unit: str  # "usd", "pct", "x", "bps" or "num"
     tolerance: float  # half of the last written digit, in base units
+    # For figures with a magnitude word (T, B, M, K): the number as
+    # written, before scaling, and its tolerance. Some sources already
+    # report in a scale, e.g. FRED real GDP in billions (24408.011), which
+    # a finding correctly writes as "$24,408.011B".
+    written: float | None = None
+    written_tolerance: float = 0.0
 
 
 @dataclass
@@ -119,7 +128,14 @@ def _figures(text: str) -> list[Figure]:
             unit, factor = "bps", 1
         else:
             unit, factor = ("usd" if cur else "num"), 1
-        fig = Figure(m.group().strip(), number * factor, unit, half * factor)
+        fig = Figure(
+            m.group().strip(),
+            number * factor,
+            unit,
+            half * factor,
+            written=number if factor != 1 else None,
+            written_tolerance=half if factor != 1 else 0.0,
+        )
         out.setdefault((unit, round(fig.value, 6)), fig)
     return list(out.values())
 
@@ -233,8 +249,18 @@ def _flat_items(obj):
 
 
 def _matches(fig: Figure, refs: list[float]) -> bool:
+    """True if the figure, or its written number, equals a reference value.
+
+    The written number is tried only for figures with a magnitude word, to
+    accept sources that already report in that scale.
+    """
     tol = max(fig.tolerance, abs(fig.value) * 1e-6)
-    return any(abs(fig.value - r) <= tol for r in refs)
+    if any(abs(fig.value - r) <= tol for r in refs):
+        return True
+    if fig.written is None:
+        return False
+    tol = max(fig.written_tolerance, abs(fig.written) * 1e-6)
+    return any(abs(fig.written - r) <= tol for r in refs)
 
 
 def _expected(claim, lines: dict) -> float | None:

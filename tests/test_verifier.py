@@ -39,7 +39,12 @@ RAW = {
             "vol_annualized": 0.3727,
         },
         "step 5: get_macro_snapshot": [
-            {"series": "DGS10", "latest": 5.10, "one_year_ago": 4.05}
+            {"series": "DGS10", "latest": 5.10, "one_year_ago": 4.05},
+            {
+                "series": "GDPC1",
+                "latest": 24408.011,
+                "one_year_ago": 23884.563,
+            },
         ],
     },
 }
@@ -130,3 +135,37 @@ def test_summary_rows_describe_each_finding():
     rows = summary_rows(verify_findings([f], RAW)[1])
     assert rows[0]["confirmed"] == 1 and rows[0]["contradicted"] == 1
     assert "$130.1B -> $120.067B" in rows[0]["corrections"]
+
+
+def test_figure_matches_source_already_reported_in_billions():
+    # FRED reports real GDP in billions: raw 24408.011 is $24,408.011B.
+    # Seen in the Oct 19 run, where both GDP levels were flagged.
+    check = check_finding(
+        finding(
+            "Real GDP rose to $24,408.011B from $23,884.563B.", route="market"
+        ),
+        POOLED,
+    )
+    assert check.confirmed == ["$24,408.011B", "$23,884.563B"]
+    assert check.not_found == []
+
+
+def test_written_number_match_still_respects_precision():
+    # 24,408.1 is not 24408.011 at one decimal place, in either scale.
+    check = check_finding(
+        finding("Real GDP $24,408.1B", route="market"), POOLED
+    )
+    assert check.not_found == ["$24,408.1B"]
+
+
+def test_written_number_is_not_used_for_unscaled_figures():
+    # "$27.07" with no magnitude word is compared only as written.
+    check = check_finding(finding("Shares at $28.07"), POOLED)
+    assert check.not_found == ["$28.07"]
+
+
+def test_scaled_match_does_not_hide_contradictions():
+    # Net income has an explicit metric and year, so it is still checked
+    # against the statement value, not matched loosely.
+    check = check_finding(finding("Net income FY2026: $130.1B"), POOLED)
+    assert len(check.contradicted) == 1
