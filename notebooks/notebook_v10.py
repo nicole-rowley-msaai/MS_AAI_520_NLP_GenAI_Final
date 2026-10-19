@@ -74,7 +74,7 @@ def _replace(cells: list[dict], needle: str, old: str, new: str) -> None:
 C1_CELL = "rep, tr, st = run_agent(t, reviewed_evaluation=True)"
 PLOT_CELL = 'ax.set_title("Rubric comparison: no-tools baseline'
 
-MATCHED_SUMMARY = r"""# Evidence-matched comparison, computed from the table above.
+MATCHED_SUMMARY = r"""# Evidence-matched comparison, from the C1 table.
 from IPython.display import Markdown
 
 paired = results[["ticker", "matched_baseline_avg", "agent_final",
@@ -86,11 +86,12 @@ display(paired)
 
 gaps = paired["agent_minus_matched"]
 better = int((gaps > 0).sum())
+matched = ", ".join(f"{v:.1f}" for v in paired["matched_baseline_avg"])
+agent = ", ".join(f"{v:.1f}" for v in paired["agent_final"])
 display(Markdown(
     "**Evidence-matched baseline.** With the same findings, a single-pass "
-    "brief scored " + ", ".join(f"{v:.1f}" for v in paired["matched_baseline_avg"])
-    + " against the agent's " + ", ".join(f"{v:.1f}" for v in paired["agent_final"])
-    + f" ({', '.join(paired['ticker'])}). The agent scored higher on "
+    f"brief scored {matched} against the agent's {agent} "
+    f"({', '.join(paired['ticker'])}). The agent scored higher on "
     f"{better} of {len(paired)} tickers, by {gaps.mean():+.1f} points on "
     "average. This difference, not the gap to the no-tools baseline, is "
     "what planning, revision and the quality gate add beyond access to the "
@@ -130,7 +131,79 @@ the models that wrote the findings. Its corrections and flags travel with
 the findings to the synthesizer and the evaluator. News findings summarize
 article text, which the verifier does not hold, so they are not checked."""
 
-B6B_CODE = r"""# Data verification specialist: each finding checked against raw tool data.
+CODE_LINE_WRAPS = {
+    'REPO_URL = "https://github.com/nicole-rowley-msaai/'
+    'MS_AAI_520_NLP_GenAI_Final.git"': (
+        "REPO_URL = (\n"
+        '    "https://github.com/nicole-rowley-msaai/"\n'
+        '    "MS_AAI_520_NLP_GenAI_Final.git"\n'
+        ")"
+    ),
+    'print("Execution date (UTC):", '
+    'datetime.now(timezone.utc).isoformat(timespec="seconds"))': (
+        "print(\n"
+        '    "Execution date (UTC):",\n'
+        '    datetime.now(timezone.utc).isoformat(timespec="seconds"),\n'
+        ")"
+    ),
+    "display(comparison[metric_cols].sort_values("
+    '"macro_f1 (mean)", ascending=False))': (
+        "display(\n"
+        "    comparison[metric_cols].sort_values("
+        '"macro_f1 (mean)", ascending=False)\n'
+        ")"
+    ),
+    'print("Accuracy by agreement level is reported in the preceding '
+    'table and plot.")': (
+        "print(\n"
+        '    "Accuracy by agreement level is reported in the preceding "\n'
+        '    "table and plot."\n'
+        ")"
+    ),
+    '    print("Quality criteria were not met; the following report is '
+    'retained for diagnostic review.")': (
+        "    print(\n"
+        '        "Quality criteria were not met; the following report is "\n'
+        '        "retained for diagnostic review."\n'
+        "    )"
+    ),
+    'display(results[["ticker", "baseline_avg", "matched_baseline_avg", '
+    '"agent_first_draft",': (
+        'display(results[["ticker", "baseline_avg", "matched_baseline_avg",\n'
+        '                 "agent_first_draft",'
+    ),
+    "_, tr_off, st_off = run_agent(TICKER, use_memory=False, "
+    "reviewed_evaluation=True)": (
+        "_, tr_off, st_off = run_agent(\n"
+        "    TICKER, use_memory=False, reviewed_evaluation=True\n"
+        ")"
+    ),
+    "_, tr_on, st_on = run_agent(TICKER, use_memory=True, "
+    "reviewed_evaluation=True)": (
+        "_, tr_on, st_on = run_agent(\n"
+        "    TICKER, use_memory=True, reviewed_evaluation=True\n"
+        ")"
+    ),
+}
+
+
+def _wrap_code_lines(cells: list[dict]) -> None:
+    """Replace each long code line with its wrapped form, exactly once."""
+    for old, new in CODE_LINE_WRAPS.items():
+        hits = [
+            c
+            for c in cells
+            if c["cell_type"] == "code" and old in _text(c).splitlines()
+        ]
+        if len(hits) != 1:
+            raise ValueError(f"v10 pass: expected one cell with {old!r}")
+        lines = _text(hits[0]).split("\n")
+        hits[0]["source"] = "\n".join(
+            new if line == old else line for line in lines
+        )
+
+
+B6B_CODE = r"""# Verification specialist: findings checked against raw data.
 verification = pd.DataFrame(state["verification"])
 display(verification[["route", "status", "checked", "confirmed",
                       "not_found", "contradicted"]])
@@ -422,4 +495,5 @@ def finalize_v10(notebook: dict) -> dict:
     )
 
     cells.insert(plot + 1, _code(MATCHED_SUMMARY))
+    _wrap_code_lines(cells)
     return notebook
