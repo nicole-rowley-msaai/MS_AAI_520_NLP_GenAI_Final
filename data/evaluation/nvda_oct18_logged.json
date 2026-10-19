@@ -1,0 +1,22 @@
+{
+  "ticker": "NVDA",
+  "source": "Transcribed from user's live integrated terminal output on 2026-10-18; no draft/findings snapshot was saved",
+  "history": [
+    {
+      "iteration": 0,
+      "average": 4.0,
+      "scores": {"completeness": 5, "evidence": 4, "accuracy": 3, "balance": 4, "clarity": 4},
+      "numeric_checked": 4,
+      "numeric_contradicted": 0,
+      "numeric_unverified": 2
+    },
+    {
+      "iteration": 1,
+      "average": 4.8,
+      "scores": {"completeness": 5, "evidence": 5, "accuracy": 5, "balance": 5, "clarity": 4},
+      "numeric_checked": 2,
+      "numeric_contradicted": 0,
+      "numeric_unverified": 0
+    }
+  ]
+}

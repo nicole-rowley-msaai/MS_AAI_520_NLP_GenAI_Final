@@ -1,0 +1,45 @@
+{
+  "ticker": "NVDA",
+  "source": "Transcribed from user's live integrated terminal output on 2026-10-18; no draft/findings snapshot was saved",
+  "comparison": {
+    "comparison_type": "matched_score_policy_replay_not_independent_agent_ab_test",
+    "original_stop_iteration": 1,
+    "enhanced_stop_iteration": 1,
+    "enhanced_selected_accepted_iteration": 1,
+    "rows": [
+      {
+        "iteration": 0,
+        "average": 4.0,
+        "accuracy": 3,
+        "evidence": 4,
+        "numeric_checked": 4,
+        "numeric_contradicted": 0,
+        "numeric_unverified": 2,
+        "original_threshold_eligible": true,
+        "enhanced_eligible": false,
+        "enhanced_failures": [
+          "accuracy_below_threshold"
+        ],
+        "original_action": "revise",
+        "enhanced_action": "revise",
+        "legacy_unsupported_figures_count": null
+      },
+      {
+        "iteration": 1,
+        "average": 4.8,
+        "accuracy": 5,
+        "evidence": 5,
+        "numeric_checked": 2,
+        "numeric_contradicted": 0,
+        "numeric_unverified": 0,
+        "original_threshold_eligible": true,
+        "enhanced_eligible": true,
+        "enhanced_failures": [],
+        "original_action": "accept",
+        "enhanced_action": "accept",
+        "legacy_unsupported_figures_count": null
+      }
+    ],
+    "interpretation": "Both policies reuse the same LLM ratings from one enhanced-agent run. They do not prove different final report quality; the enhanced optimizer generated the recorded revisions. Unrecognized numeric claims were not audited."
+  }
+}

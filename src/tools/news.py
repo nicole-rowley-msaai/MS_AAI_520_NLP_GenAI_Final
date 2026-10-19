@@ -16,7 +16,9 @@ NEWSAPI_URL = "https://newsapi.org/v2/everything"
 
 
 @memory.cache
-def _newsapi(query: str, days: int, day: str) -> list[dict]:
+def _newsapi(
+    query: str, days: int, day: str, sort_by: str = "relevancy"
+) -> list[dict]:
     # `day` is only part of the cache key, so results refresh once a day.
     api_key = secret("NEWSAPI_KEY")
     since = (datetime.now(timezone.utc) - timedelta(days=days)).strftime(
@@ -24,6 +26,10 @@ def _newsapi(query: str, days: int, day: str) -> list[dict]:
     )
     # qInTitle: the company must be in the headline, which drops market
     # roundups that only mention it in passing.
+    # sortBy="relevancy": "publishedAt" fills the 100-article page with
+    # the newest items first, so a high-volume ticker may get only its
+    # most recent hours (NVDA's first five fell within 40 minutes),
+    # not the 30-day lookback. The chain logs the span it received.
     resp = requests.get(
         NEWSAPI_URL,
         timeout=20,
@@ -31,7 +37,7 @@ def _newsapi(query: str, days: int, day: str) -> list[dict]:
             "qInTitle": query,
             "from": since,
             "language": "en",
-            "sortBy": "publishedAt",
+            "sortBy": sort_by,
             "pageSize": 100,
             "apiKey": api_key,
         },

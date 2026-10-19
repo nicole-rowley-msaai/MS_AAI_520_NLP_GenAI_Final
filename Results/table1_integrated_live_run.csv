@@ -1,0 +1,4 @@
+ticker,baseline_avg,agent_first_draft,agent_final,accepted,selected_iteration,numeric_checked,numeric_contradicted,numeric_unverified,iterations,tool_success,unsupported_baseline,unsupported_agent
+NVDA,1.8,4.2,4.4,True,1,4,0,2,2,1.0,4,5
+JPM,2.0,4.4,4.4,True,1,1,0,0,2,1.0,8,8
+XOM,1.6,4.4,4.4,True,0,0,0,0,2,1.0,14,12

@@ -7,6 +7,9 @@ assignment asks for. Run from the repo root:
     python notebooks/build_final.py
 
 The result has no outputs; run it top to bottom in Colab and export.
+
+Imports notebook_evaluation_integration.py to preserve the combined
+Evaluation Lead experiment when this builder is rerun.
 """
 
 import json
@@ -64,7 +67,7 @@ def renumber(section: list[dict], part: str) -> list[dict]:
 
 TITLE = f"""# EquityAgent: An Autonomous Agentic Workflow for Investment Research
 
-**GitHub repository:** {REPO_URL} (branch `agent`)
+**GitHub repository:** {REPO_URL} (branch `main`)
 
 MS in Applied AI, University of San Diego. AAI-520: NLP and Generative AI,
 final project.
@@ -98,27 +101,34 @@ from google.colab import drive, userdata
 os.chdir("/content")
 drive.mount("/content/drive")
 
+# To test a pull request, set BRANCH to its branch and REPO to a separate
+# Drive folder, so the team's working copy is not touched.
+BRANCH = "main"
 REPO = "/content/drive/MyDrive/equity-agent"
-REPO_URL = (
-    f"https://{userdata.get('GITHUB_TOKEN')}@github.com/"
-    "nicole-rowley-msaai/MS_AAI_520_NLP_GenAI_Final.git"
-)
+REPO_URL = "https://github.com/nicole-rowley-msaai/MS_AAI_520_NLP_GenAI_Final.git"
+
 if os.path.isdir(os.path.join(REPO, ".git")):
+    !git -C {REPO} fetch -q origin
+    !git -C {REPO} checkout -q {BRANCH}
     !git -C {REPO} pull -q
 else:
-    !git clone -q --branch agent {REPO_URL} {REPO}
+    !git clone -q --branch {BRANCH} {REPO_URL} {REPO}
 %cd {REPO}
 sys.path.insert(0, REPO)
+!git log -1 --format='%h %an  %s'
 
-SKIP = "google-adk\\|dependency resolver"
+SKIP = r"google-adk\\|dependency resolver"
 !pip install -q -r requirements.txt 2>&1 | grep -v "{SKIP}"
 
+# Kaggle: newer accounts issue one KAGGLE_API_TOKEN; older ones use
+# KAGGLE_USERNAME + KAGGLE_KEY. Either set is enough.
 SECRET_KEYS = [
     "OPENAI_API_KEY",
     "ANTHROPIC_API_KEY",
     "FRED_API_KEY",
     "NEWSAPI_KEY",
     "EDGAR_USER_AGENT",
+    "KAGGLE_API_TOKEN",
     "KAGGLE_USERNAME",
     "KAGGLE_KEY",
 ]
@@ -167,8 +177,10 @@ The agent's tools and the news prompt chain are built and tested before
 the agent uses them. This part checks each data source (yfinance, FRED,
 NewsAPI, SEC EDGAR), explores the Kaggle financial-news dataset used to
 benchmark the sentiment classifier, and compares the LLM classifier with
-a keyword baseline. Every tool call goes through `safe_call`, so a failed
-API shows as `ok=False` instead of stopping the notebook.
+a keyword baseline and a supervised TF-IDF baseline, with zero-shot and
+few-shot prompts, broken down by annotator agreement. Every tool call
+goes through `safe_call`, so a failed API shows as `ok=False` instead of
+stopping the notebook.
 """
 
 PART_B = """# Part B. Agent run
@@ -250,7 +262,7 @@ SUMMARY = """## Summary
 """
 
 # 01: data check, Kaggle EDA, classifier evaluation (after its setup)
-part_a = renumber(cells(NB1, 4, 19), "A")  # 01's chain demo = B5
+part_a = renumber(cells(NB1, 4, 23), "A")  # 01's chain demo = B5
 
 # 02: smoke test through memory (after its setup); the smoke-test heading
 # in 02 carries the assignment heading, which Part A now owns.
@@ -313,6 +325,13 @@ final = {
     ],
 }
 
+from notebook_evaluation_integration import enhance_final_notebook
+
+final = enhance_final_notebook(final)
+from notebook_publication_polish import polish_final_notebook
+final = polish_final_notebook(final)
+from notebook_rubric_finalization import finalize_for_rubric
+final = finalize_for_rubric(final)
 out = HERE / "final_project.ipynb"
 out.write_text(json.dumps(final, indent=1, ensure_ascii=False) + "\n")
 print(f"wrote {out} with {len(final['cells'])} cells")
