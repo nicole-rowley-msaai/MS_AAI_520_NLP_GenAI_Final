@@ -80,7 +80,16 @@ def news_chain_steps(trace: RunTrace, max_items: int = 5) -> None:
 
 
 def findings_table(trace: RunTrace) -> pd.DataFrame:
-    rows = [e.output for e in trace.select("specialist")]
+    """One row per specialist finding.
+
+    Specialists also log the raw tool data they received (kind
+    "tool_data") for the verifier; those events are not findings.
+    """
+    rows = [
+        e.output
+        for e in trace.select("specialist")
+        if e.kind != "tool_data"
+    ]
     return pd.DataFrame(rows)[["route", "summary", "key_figures", "risks"]]
 
 

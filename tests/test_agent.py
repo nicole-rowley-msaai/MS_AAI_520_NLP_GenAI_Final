@@ -477,3 +477,17 @@ def test_verifier_runs_between_specialists_and_synthesizer(wired):
     assert [r["route"] for r in state["verification"]] == [
         "earnings", "news", "market",
     ]
+
+
+def test_findings_table_shows_only_findings(wired):
+    # Specialists also log their raw tool data under the same step name;
+    # those events must not appear as empty rows in the B6 table.
+    from src import display as show
+
+    g, _, _ = wired
+    _, trace, _ = g.run_agent("X", save=False)
+    assert trace.select("specialist", "tool_data")
+    table = show.findings_table(trace)
+    assert len(table) == 3
+    assert not table.isna().any().any()
+    assert set(table["route"]) == {"earnings", "news", "market"}
