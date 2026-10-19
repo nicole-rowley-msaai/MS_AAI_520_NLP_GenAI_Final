@@ -1,4 +1,4 @@
-"""LangGraph wiring: plan -> route -> specialists -> synthesize ->
+"""LangGraph wiring: plan -> route -> specialists -> verify -> synthesize ->
 evaluate <-> optimize -> reflect -> remember.
 
 run_agent(ticker) returns (report_markdown, trace). Every node logs to
@@ -31,6 +31,7 @@ from src.agents.schemas import (
 )
 from src.agents.specialists import run_specialist
 from src.agents.synthesizer import render, synthesize
+from src.agents.verifier import as_dict, summary_rows, verify_findings
 from src.memory import store
 from src.tools import safe_call
 from src.tools.market import get_key_stats
@@ -45,7 +46,9 @@ class AgentState(TypedDict, total=False):
     notes: list[dict]
     plan: ResearchPlan
     routes: list[RouteDecision]
-    findings: list[Finding]
+    findings: list[Finding]  # verified copies once node_verify has run
+    specialist_findings: list[Finding]  # as the specialists wrote them
+    verification: list[dict]  # one row per finding, from the verifier
     draft: Draft
     evaluation: Evaluation
     history: list[dict]  # one entry per evaluator iteration
@@ -125,6 +128,36 @@ def node_specialists(state: AgentState) -> AgentState:
         time.perf_counter() - start,
     )
     return {"findings": findings}
+
+
+def node_verify(state: AgentState) -> AgentState:
+    """Data verification specialist: check findings against raw tool data.
+
+    Runs after the specialists and before the synthesizer, so errors in a
+    finding are flagged or corrected before any brief is written. See
+    src/agents/verifier.py.
+    """
+    t = state["trace"]
+    raw: dict[str, dict] = {}
+    for event in t.select("specialist", "tool_data"):
+        raw.setdefault(event.input.get("route", "general"), {}).update(
+            event.output or {}
+        )
+    start = time.perf_counter()
+    findings, checks = verify_findings(state["findings"], raw)
+    rows = summary_rows(checks)
+    t.log(
+        "verifier",
+        "report",
+        {"routes": sorted(raw)},
+        {"rows": rows, "checks": [as_dict(c) for c in checks]},
+        time.perf_counter() - start,
+    )
+    return {
+        "findings": findings,
+        "specialist_findings": state["findings"],
+        "verification": rows,
+    }
 
 
 def node_synthesize(state: AgentState) -> AgentState:
@@ -327,6 +360,7 @@ def build_graph():
     g.add_node("plan", node_plan)
     g.add_node("route", node_route)
     g.add_node("specialists", node_specialists)
+    g.add_node("verify", node_verify)
     g.add_node("synthesize", node_synthesize)
     g.add_node("evaluate", node_evaluate)
     g.add_node("optimize", node_optimize)
@@ -335,7 +369,8 @@ def build_graph():
     g.set_entry_point("plan")
     g.add_edge("plan", "route")
     g.add_edge("route", "specialists")
-    g.add_edge("specialists", "synthesize")
+    g.add_edge("specialists", "verify")
+    g.add_edge("verify", "synthesize")
     g.add_edge("synthesize", "evaluate")
     g.add_conditional_edges(
         "evaluate", should_refine, {"refine": "optimize", "finish": "reflect"}

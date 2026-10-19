@@ -451,3 +451,29 @@ def test_reflection_with_memory_off_sees_no_lessons(wired):
         fake, lambda: g.run_agent("X", use_memory=False, save=False)
     )
     assert "(none)" in prompts[0]
+
+
+def test_verifier_runs_between_specialists_and_synthesizer(wired):
+    g, _, _ = wired
+    _, trace, state = g.run_agent("X", save=False)
+    steps = [e.step for e in trace.events]
+    last_specialist = max(i for i, s in enumerate(steps) if s == "specialist")
+    verifier = steps.index("verifier")
+    assert last_specialist < verifier < steps.index("synthesizer")
+
+    # Specialists recorded the raw tool data the verifier read.
+    assert trace.select("specialist", "tool_data")
+    report = trace.select("verifier", "report")[0].output
+    routes = {r["route"] for r in report["rows"]}
+    assert routes == {"earnings", "news", "market"}
+
+    # Verified copies go downstream; the specialists' originals are kept.
+    earnings = state["findings"][0]
+    assert earnings.key_figures[-1].startswith("VERIFICATION:")
+    assert not any(
+        k.startswith("VERIFICATION")
+        for k in state["specialist_findings"][0].key_figures
+    )
+    assert [r["route"] for r in state["verification"]] == [
+        "earnings", "news", "market",
+    ]

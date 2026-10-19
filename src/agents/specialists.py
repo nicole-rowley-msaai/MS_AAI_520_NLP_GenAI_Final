@@ -57,6 +57,9 @@ def run_specialist(
         outputs[f"step {step.id}: {step.tool}"] = (
             result.data if result.ok else f"ERROR: {result.error}"
         )
+    # Keep the exact tool output for the data verification specialist,
+    # which checks this finding against it before synthesis.
+    trace.log("specialist", "tool_data", {"route": route}, outputs)
 
     user = (
         f"Ticker: {ticker} ({COMPANIES.get(ticker, ticker)})\n"

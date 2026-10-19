@@ -25,7 +25,10 @@ EVAL_SYSTEM = (
     "- balance: bull and bear cases are both substantive\n"
     "- clarity: a portfolio manager can act on it in two minutes\n"
     "List specific, fixable critiques. Be strict about figures that do not "
-    "appear in the findings."
+    "appear in the findings. Findings may end with VERIFICATION lines from "
+    "the data verification specialist: treat a figure it corrected or could "
+    "not find as unsupported unless the brief uses the corrected value or "
+    "attributes the figure."
 )
 
 OPTIMIZE_SYSTEM = (
