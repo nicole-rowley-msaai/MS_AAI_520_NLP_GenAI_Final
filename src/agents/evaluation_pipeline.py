@@ -165,12 +165,22 @@ class ReviewedEvaluationSession:
         )
 
 
-def numeric_feedback(audit: NumericAudit) -> list[str]:
+def numeric_feedback(
+    audit: NumericAudit, policy: NumericPolicy | None = None
+) -> list[str]:
     """Turn machine detected problems into specific revision instructions.
 
     The optimizer gets these critiques in addition to the LLM critiques.
     We do not silently alter the LLM's original numeric scores.
+
+    With a ``policy``, only problems that policy can reject are sent:
+    contradictions always; unverified figures only if ``reject_unverified``;
+    the no-coverage note only if ``require_recognized_claims``. Sending
+    nonblocking items made the optimizer rewrite figures to suit the
+    parser rather than the reader. Without a policy, everything is sent.
     """
+    send_unverified = policy is None or policy.reject_unverified
+    send_coverage = policy is None or policy.require_recognized_claims
     feedback = []
     for check in audit.contradictions:
         expected = (
@@ -182,13 +192,13 @@ def numeric_feedback(audit: NumericAudit) -> list[str]:
             f"Numeric contradiction in {check.metric}: {check.excerpt!r}"
             f"{expected}. Confirm metric, period, units and calculation."
         )
-    for check in audit.unverified:
+    for check in audit.unverified if send_unverified else ():
         feedback.append(
             f"Numeric evidence unresolved for {check.metric}: "
             f"{check.excerpt!r} ({check.reason}). "
             "Locate comparable findings or mark the claim as unverified."
         )
-    if not audit.checks:
+    if send_coverage and not audit.checks:
         feedback.append(
             "No numerical statements matched the limited numeric validator. "
             "State metric, fiscal period, and units explicitly; "
@@ -226,7 +236,9 @@ def run_reviewed_cycle(
         if not session.should_refine():
             return session.finish()
         revised_feedback = evaluation.model_copy(deep=True)
-        revised_feedback.critiques.extend(numeric_feedback(audit))
+        revised_feedback.critiques.extend(
+            numeric_feedback(audit, session.numeric_policy)
+        )
         updated = optimize_fn(current, revised_feedback, findings)
         if updated.ticker != initial_draft.ticker:
             raise ValueError("optimizer changed the stock ticker")

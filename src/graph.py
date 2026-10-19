@@ -223,7 +223,12 @@ def node_optimize(state: AgentState) -> AgentState:
     feedback = state["evaluation"]
     if state.get("reviewed_evaluation", False):
         feedback = feedback.model_copy(deep=True)
-        feedback.critiques.extend(numeric_feedback(state["numeric_audit"]))
+        feedback.critiques.extend(
+            numeric_feedback(
+                state["numeric_audit"],
+                state["review_session"].numeric_policy,
+            )
+        )
     draft = t.timed(
         "optimizer",
         "revision",

@@ -393,3 +393,23 @@ def test_memory_ranks_ticker_before_sector_before_general():
     ]
     read = store.relevant_notes("X", "Tech", notes)
     assert [n["lesson"] for n in read] == ["ticker", "sector", "general"]
+
+
+def test_reviewed_run_sends_optimizer_only_blocking_numeric_feedback(wired):
+    # The fake drafts contain no recognized figures. Under the live policy
+    # that cannot block acceptance, so the optimizer must not be told about it.
+    g, fake, _ = wired
+    prompts = []
+    original = fake.__class__.__call__
+
+    def recording(self, model, system, user, schema):
+        prompts.append(user)
+        return original(self, model, system, user, schema)
+
+    fake.__class__.__call__ = recording
+    try:
+        g.run_agent("X", save=False, reviewed_evaluation=True)
+    finally:
+        fake.__class__.__call__ = original
+    assert prompts
+    assert not any("No numerical statements matched" in p for p in prompts)

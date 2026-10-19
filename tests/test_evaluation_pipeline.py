@@ -289,3 +289,32 @@ def test_session_does_not_allow_premature_finish():
     assert review.should_refine()
     with pytest.raises(RuntimeError):
         review.finish()
+
+
+LIVE_POLICY = NumericPolicy(require_recognized_claims=False, reject_unverified=False)
+
+
+def test_live_policy_feedback_keeps_contradictions():
+    audit = audit_numeric_claims(draft("Revenue FY2025: $150B"), findings())
+    feedback = numeric_feedback(audit, LIVE_POLICY)
+    assert len(feedback) == 1
+    assert "contradiction" in feedback[0]
+
+
+def test_live_policy_feedback_omits_nonblocking_unverified_figures():
+    audit = audit_numeric_claims(draft("Revenue FY2024: $100B"), findings())
+    assert audit.unverified
+    assert numeric_feedback(audit, LIVE_POLICY) == []
+
+
+def test_live_policy_feedback_omits_coverage_note():
+    audit = audit_numeric_claims(
+        draft("Prose without recognized financial metrics"), findings()
+    )
+    assert numeric_feedback(audit, LIVE_POLICY) == []
+
+
+def test_strict_policy_feedback_matches_unfiltered_feedback():
+    for text in ("Revenue FY2024: $100B", "Prose without metrics"):
+        audit = audit_numeric_claims(draft(text), findings())
+        assert numeric_feedback(audit, NumericPolicy()) == numeric_feedback(audit)
