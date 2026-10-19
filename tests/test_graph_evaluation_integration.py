@@ -40,7 +40,7 @@ def setup(monkeypatch, initial: Draft) -> dict:
     monkeypatch.setattr(graph, "synthesize", lambda ticker, findings: initial)
     monkeypatch.setattr(
         graph.ev, "reflect",
-        lambda draft, findings, tools: Reflection(
+        lambda draft, findings, tools, **kwargs: Reflection(
             weakest_section="news", unsupported_claims=[], missing_data=[],
             failed_tools=[], what_to_change=[], confidence="medium",
             lessons=["Review source data"],

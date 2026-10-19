@@ -41,7 +41,10 @@ REFLECT_SYSTEM = (
     "findings. Then judge the process: what data was missing, which tools "
     "failed, what to change next time. Finally write 3-5 short lessons that "
     "would help a future run on this company or its sector, phrased as "
-    "reusable rules (e.g. 'For banks, pull net interest margin')."
+    "reusable rules (e.g. 'For banks, pull net interest margin'). If "
+    "lessons are already stored, do not restate them in new words: write "
+    "only lessons that add something new, and fewer lessons if that is "
+    "all this run taught."
 )
 
 
@@ -74,12 +77,21 @@ def reflect(
     findings: list[Finding],
     tool_log: list[dict],
     model: str = MODELS["writer"],
+    stored_lessons: list[str] | None = None,
 ) -> Reflection:
+    """Self-review the run and propose lessons for future runs.
+
+    ``stored_lessons`` are the lessons the planner read for this run. They
+    are shown so the reflection adds new lessons instead of rewording old
+    ones, which crowded new lessons out of memory.
+    """
     failed = [t for t in tool_log if not t.get("ok")]
+    stored = "\n".join(f"- {lesson}" for lesson in stored_lessons or [])
     user = (
         f"FINAL BRIEF\n{render(draft)}\n\n"
         f"FINDINGS\n{findings_text(findings)}\n\n"
         f"TOOL CALLS: {len(tool_log)} total, {len(failed)} failed\n"
-        f"FAILED: {failed}"
+        f"FAILED: {failed}\n\n"
+        f"LESSONS ALREADY STORED (do not restate)\n{stored or '(none)'}"
     )
     return structured(model, REFLECT_SYSTEM, user, Reflection)

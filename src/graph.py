@@ -289,6 +289,7 @@ def node_reflect(state: AgentState) -> AgentState:
         selected_draft,
         state["findings"],
         tool_log,
+        stored_lessons=[n["lesson"] for n in state.get("notes", [])],
     )
     new_notes = []
     if state.get("use_memory", True):

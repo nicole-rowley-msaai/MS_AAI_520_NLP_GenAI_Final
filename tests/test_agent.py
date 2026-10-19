@@ -413,3 +413,41 @@ def test_reviewed_run_sends_optimizer_only_blocking_numeric_feedback(wired):
         fake.__class__.__call__ = original
     assert prompts
     assert not any("No numerical statements matched" in p for p in prompts)
+
+
+def _reflection_prompts(fake, run):
+    prompts = []
+    original = fake.__class__.__call__
+
+    def recording(self, model, system, user, schema):
+        if schema is Reflection:
+            prompts.append(user)
+        return original(self, model, system, user, schema)
+
+    fake.__class__.__call__ = recording
+    try:
+        run()
+    finally:
+        fake.__class__.__call__ = original
+    return prompts
+
+
+def test_reflection_sees_stored_lessons_and_is_told_not_to_restate(wired):
+    g, fake, _ = wired
+    first = _reflection_prompts(fake, lambda: g.run_agent("X", save=False))
+    assert "LESSONS ALREADY STORED (do not restate)\n(none)" in first[0]
+    second = _reflection_prompts(fake, lambda: g.run_agent("X", save=False))
+    assert "- Lesson A\n- Lesson B" in second[0]
+
+    from src.agents.evaluator import REFLECT_SYSTEM
+
+    assert "do not restate them" in REFLECT_SYSTEM
+
+
+def test_reflection_with_memory_off_sees_no_lessons(wired):
+    g, fake, _ = wired
+    g.run_agent("X", save=False)  # stores Lesson A and B
+    prompts = _reflection_prompts(
+        fake, lambda: g.run_agent("X", use_memory=False, save=False)
+    )
+    assert "(none)" in prompts[0]
