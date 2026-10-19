@@ -15,7 +15,11 @@ reports its counts per ticker in C1, and notes its scope under
 limitations.
 
 It also points the setup cell at ``main``, so a fresh Colab run executes
-the revised code rather than the old integration branch.
+the revised code rather than the old integration branch, and makes the
+setup protect itself: the Drive copy is reset to exactly the GitHub
+commit, modules from an earlier run in the same session are dropped so
+imports load the checked-out code, and the import cell stops if the code
+came from anywhere else.
 
 Calling it twice leaves the notebook unchanged.
 """
@@ -130,6 +134,83 @@ for row in state["verification"]:
         print(f"{row['route']}: {row['note']}")
 """
 
+OLD_GIT = """if os.path.isdir(os.path.join(REPO, ".git")):
+    !git -C {REPO} fetch -q origin
+    !git -C {REPO} checkout -q {BRANCH}
+    !git -C {REPO} pull -q
+else:
+    !git clone -q --branch {BRANCH} {REPO_URL} {REPO}
+%cd {REPO}
+sys.path.insert(0, REPO)
+!git log -1 --format='%h %an  %s'
+"""
+
+NEW_GIT = """if os.path.isdir(os.path.join(REPO, ".git")):
+    # Match GitHub exactly. A plain pull can stop on files an earlier run
+    # changed in this copy (memory notes, Table 1). The copy exists only
+    # for runs, so those changes are discarded; untracked downloads such
+    # as the Kaggle CSV are kept.
+    !git -C {REPO} fetch -q origin
+    !git -C {REPO} checkout -q -B {BRANCH} origin/{BRANCH}
+    !git -C {REPO} reset -q --hard origin/{BRANCH}
+else:
+    !git clone -q --branch {BRANCH} {REPO_URL} {REPO}
+%cd {REPO}
+COMMIT = subprocess.run(
+    ["git", "-C", REPO, "rev-parse", "--short", "HEAD"],
+    capture_output=True, text=True,
+).stdout.strip()
+!git log -1 --format='%h %an  %s'
+
+# Forget EquityAgent modules that an earlier "Run all" in this session
+# imported, so the next cell loads the code just checked out.
+for name in [m for m in sys.modules if m == "src" or m.startswith("src.")]:
+    del sys.modules[name]
+importlib.invalidate_caches()
+if REPO not in sys.path:
+    sys.path.insert(0, REPO)
+"""
+
+OLD_SECRETS = """loaded = []
+for key in SECRET_KEYS:
+    try:
+        os.environ[key] = userdata.get(key)
+        loaded.append(key)
+    except Exception:
+        print(f"Missing secret: {key}")
+print("Loaded:", loaded)
+"""
+
+NEW_SECRETS = """loaded, missing = [], []
+for key in SECRET_KEYS:
+    try:
+        os.environ[key] = userdata.get(key)
+        loaded.append(key)
+    except Exception:
+        missing.append(key)
+kaggle_ok = "KAGGLE_API_TOKEN" in loaded or {
+    "KAGGLE_USERNAME", "KAGGLE_KEY"} <= set(loaded)
+missing = [k for k in missing if not k.startswith("KAGGLE_")]
+if not kaggle_ok:
+    missing.append("KAGGLE_API_TOKEN (or KAGGLE_USERNAME + KAGGLE_KEY)")
+print("Loaded:", loaded)
+if missing:
+    print("Missing secrets:", missing)
+"""
+
+IMPORT_GUARD = """
+# Stop before any agent run if the code did not come from this checkout.
+import src.graph as _graph  # noqa: E402
+
+assert os.path.realpath(_graph.__file__).startswith(
+    os.path.realpath(REPO)
+), (
+    f"Agent code was imported from {_graph.__file__}, not {REPO}. "
+    "Use Runtime > Restart session, then Run all."
+)
+print(f"Agent code loaded from {REPO} at commit {COMMIT}")
+"""
+
 
 def finalize_v10(notebook: dict) -> dict:
     cells = notebook["cells"]
@@ -231,6 +312,16 @@ def finalize_v10(notebook: dict) -> dict:
              "published filings. A figure it\n  cannot find may still be "
              "correct, and news figures are not checked.\n"
              "- **Comparison scope.**")
+
+    # Self-protecting setup: exact checkout, fresh imports, checked origin.
+    setup = "# --- Colab setup"
+    _replace(cells, setup, "import os\nimport sys\n",
+             "import importlib\nimport os\nimport subprocess\nimport sys\n")
+    _replace(cells, setup, OLD_GIT, NEW_GIT)
+    _replace(cells, setup, OLD_SECRETS, NEW_SECRETS)
+    _replace(cells, "from src.graph import run_agent  # noqa: E402",
+             'pd.set_option("display.max_colwidth", 120)\n',
+             'pd.set_option("display.max_colwidth", 120)\n' + IMPORT_GUARD)
 
     cells.insert(plot + 1, _code(MATCHED_SUMMARY))
     return notebook
