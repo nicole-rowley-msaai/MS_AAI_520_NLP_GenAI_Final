@@ -371,8 +371,12 @@ def test_net_sentiment_is_counted_not_judged():
 
 def test_memory_reads_newest_lessons_when_there_are_many():
     notes = [
-        {"ticker": "X", "sector": "Tech", "date": f"2026-10-{day:02d}",
-         "lesson": f"lesson {day}"}
+        {
+            "ticker": "X",
+            "sector": "Tech",
+            "date": f"2026-10-{day:02d}",
+            "lesson": f"lesson {day}",
+        }
         for day in range(1, 13)
     ]
     read = store.relevant_notes("X", "Tech", notes, limit=8)
@@ -383,13 +387,30 @@ def test_memory_reads_newest_lessons_when_there_are_many():
 
 def test_memory_ranks_ticker_before_sector_before_general():
     notes = [
-        {"ticker": "", "sector": "", "date": "2026-10-19", "lesson": "general"},
-        {"ticker": "Y", "sector": "Tech", "date": "2026-10-18",
-         "lesson": "sector"},
-        {"ticker": "X", "sector": "Tech", "date": "2026-10-01",
-         "lesson": "ticker"},
-        {"ticker": "Z", "sector": "Energy", "date": "2026-10-19",
-         "lesson": "unrelated"},
+        {
+            "ticker": "",
+            "sector": "",
+            "date": "2026-10-19",
+            "lesson": "general",
+        },
+        {
+            "ticker": "Y",
+            "sector": "Tech",
+            "date": "2026-10-18",
+            "lesson": "sector",
+        },
+        {
+            "ticker": "X",
+            "sector": "Tech",
+            "date": "2026-10-01",
+            "lesson": "ticker",
+        },
+        {
+            "ticker": "Z",
+            "sector": "Energy",
+            "date": "2026-10-19",
+            "lesson": "unrelated",
+        },
     ]
     read = store.relevant_notes("X", "Tech", notes)
     assert [n["lesson"] for n in read] == ["ticker", "sector", "general"]
@@ -475,7 +496,9 @@ def test_verifier_runs_between_specialists_and_synthesizer(wired):
         for k in state["specialist_findings"][0].key_figures
     )
     assert [r["route"] for r in state["verification"]] == [
-        "earnings", "news", "market",
+        "earnings",
+        "news",
+        "market",
     ]
 
 

@@ -64,10 +64,11 @@ def optimize(
     findings: list[Finding],
     model: str = MODELS["writer"],
 ) -> Draft:
+    scores = {c: getattr(evaluation, c) for c in CRITERIA}
     user = (
         f"FINDINGS\n{findings_text(findings)}\n\n"
         f"CURRENT BRIEF\n{render(draft)}\n\n"
-        f"SCORES: { {c: getattr(evaluation, c) for c in CRITERIA} }\n"
+        f"SCORES: {scores}\n"
         f"CRITIQUES:\n" + "\n".join(f"- {c}" for c in evaluation.critiques)
     )
     revised = structured(model, OPTIMIZE_SYSTEM, user, Draft)

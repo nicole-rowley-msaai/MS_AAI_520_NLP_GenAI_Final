@@ -31,16 +31,19 @@ def reflection(*lessons):
 
 def draft():
     return Draft(
-        ticker="NVDA", thesis="Research thesis",
-        bull_case=["Demand"], bear_case=["Competition"],
-        fundamentals="Fundamentals", news_and_catalysts="News",
-        market_and_macro="Macro", conclusion="Conclusion",
+        ticker="NVDA",
+        thesis="Research thesis",
+        bull_case=["Demand"],
+        bear_case=["Competition"],
+        fundamentals="Fundamentals",
+        news_and_catalysts="News",
+        market_and_macro="Macro",
+        conclusion="Conclusion",
     )
 
 
 def note(ticker, sector, when, lesson):
-    return {"ticker": ticker, "sector": sector,
-            "date": when, "lesson": lesson}
+    return {"ticker": ticker, "sector": sector, "date": when, "lesson": lesson}
 
 
 def test_normalize_lesson():
@@ -50,14 +53,23 @@ def test_normalize_lesson():
     )
 
 
-@pytest.mark.parametrize("content,reason", [
-    ("", "empty"),
-    ("   ", "empty"),
-    ("short", "too_short"),
-    ("x" * 241, "too_long"),
-    ("Use get_options_chain during earnings review", "unknown_explicit_tool"),
-    ("Call search_private_data for company research", "unknown_explicit_tool"),
-])
+@pytest.mark.parametrize(
+    "content,reason",
+    [
+        ("", "empty"),
+        ("   ", "empty"),
+        ("short", "too_short"),
+        ("x" * 241, "too_long"),
+        (
+            "Use get_options_chain during earnings review",
+            "unknown_explicit_tool",
+        ),
+        (
+            "Call search_private_data for company research",
+            "unknown_explicit_tool",
+        ),
+    ],
+)
 def test_reject_invalid_lessons(content, reason):
     assert verify_lesson(content) == reason
 
@@ -114,8 +126,15 @@ def test_ignores_irrelevant_ticker_and_sector():
 
 
 def test_zero_limit_selects_nothing():
-    assert select_lessons([note("NVDA", "T", "2026-10-01", "Older lesson")],
-                          "NVDA", "T", limit=0) == []
+    assert (
+        select_lessons(
+            [note("NVDA", "T", "2026-10-01", "Older lesson")],
+            "NVDA",
+            "T",
+            limit=0,
+        )
+        == []
+    )
 
 
 def test_negative_limit_is_invalid():
@@ -124,8 +143,14 @@ def test_negative_limit_is_invalid():
 
 
 def test_case_insensitive_ticker_sector():
-    assert note_priority(note("nvda", "Technology", "2026-10-01", "Whatever"),
-                         "NVDA", "technology") == 0
+    assert (
+        note_priority(
+            note("nvda", "Technology", "2026-10-01", "Whatever"),
+            "NVDA",
+            "technology",
+        )
+        == 0
+    )
 
 
 def test_unavailable_file_returns_empty(tmp_path):
@@ -137,7 +162,8 @@ def test_unavailable_file_returns_empty(tmp_path):
 def test_preview_does_not_write_file(tmp_path):
     path = tmp_path / "memory.json"
     result = EvaluationMemory(path).add_reflection(
-        "NVDA", "Technology",
+        "NVDA",
+        "Technology",
         reflection("Verify quarterly earnings before reporting growth"),
         today=date(2026, 10, 16),
     )
@@ -149,9 +175,11 @@ def test_preview_does_not_write_file(tmp_path):
 def test_persist_writes_expected_record(tmp_path):
     memory = EvaluationMemory(tmp_path / "memory.json")
     result = memory.add_reflection(
-        "nvda", "Technology",
+        "nvda",
+        "Technology",
         reflection("Verify quarterly earnings before reporting growth"),
-        today=date(2026, 10, 16), persist=True,
+        today=date(2026, 10, 16),
+        persist=True,
     )
     assert result.saved
     assert memory.load()[0]["ticker"] == "NVDA"
@@ -160,11 +188,18 @@ def test_persist_writes_expected_record(tmp_path):
 
 def test_duplicate_detection_ignores_case_and_whitespace(tmp_path):
     memory = EvaluationMemory(tmp_path / "notes.json")
-    memory.add_reflection("NVDA", "Tech",
-        reflection("Check financial statements for changes"), persist=True)
-    result = memory.add_reflection("NVDA", "Tech",
+    memory.add_reflection(
+        "NVDA",
+        "Tech",
+        reflection("Check financial statements for changes"),
+        persist=True,
+    )
+    result = memory.add_reflection(
+        "NVDA",
+        "Tech",
         reflection(" CHECK   financial statements for changes "),
-        persist=True)
+        persist=True,
+    )
     assert not result.saved
     assert result.rejected[0].reason == "duplicate"
     assert len(memory.load()) == 1
@@ -172,18 +207,28 @@ def test_duplicate_detection_ignores_case_and_whitespace(tmp_path):
 
 def test_duplicate_inside_one_reflection(tmp_path):
     memory = EvaluationMemory(tmp_path / "notes.json")
-    result = memory.add_reflection("NVDA", None,
-        reflection("Check peer valuations before publishing",
-                   " check peer valuations before publishing  "))
+    result = memory.add_reflection(
+        "NVDA",
+        None,
+        reflection(
+            "Check peer valuations before publishing",
+            " check peer valuations before publishing  ",
+        ),
+    )
     assert len(result.added_notes) == 1
     assert result.rejected[0].reason == "duplicate"
 
 
 def test_unknown_tool_name_is_rejected_in_reflection(tmp_path):
     memory = EvaluationMemory(tmp_path / "notes.json")
-    result = memory.add_reflection("NVDA", "Tech",
-        reflection("Call get_unavailable_peers before planning next run",
-                   "Call get_financials to verify income statements"))
+    result = memory.add_reflection(
+        "NVDA",
+        "Tech",
+        reflection(
+            "Call get_unavailable_peers before planning next run",
+            "Call get_financials to verify income statements",
+        ),
+    )
     assert len(result.added_notes) == 1
     assert len(result.rejected) == 1
     assert result.rejected[0].reason == "unknown_explicit_tool"
@@ -191,11 +236,17 @@ def test_unknown_tool_name_is_rejected_in_reflection(tmp_path):
 
 def test_max_records_keeps_latest_written(tmp_path):
     memory = EvaluationMemory(tmp_path / "notes.json", max_records=2)
-    first = reflection("Check filing A before planning next run",
-                       "Check filing B before planning next run")
+    first = reflection(
+        "Check filing A before planning next run",
+        "Check filing B before planning next run",
+    )
     memory.add_reflection("NVDA", None, first, persist=True)
-    memory.add_reflection("NVDA", None,
-        reflection("Check filing C before planning next run"), persist=True)
+    memory.add_reflection(
+        "NVDA",
+        None,
+        reflection("Check filing C before planning next run"),
+        persist=True,
+    )
     assert [n["lesson"] for n in memory.load()] == [
         "Check filing B before planning next run",
         "Check filing C before planning next run",
@@ -206,7 +257,9 @@ def test_malformed_json_errors_instead_of_overwriting(tmp_path):
     path = tmp_path / "memory.json"
     path.write_text("broken {", encoding="utf-8")
     with pytest.raises(ValueError, match="JSON"):
-        EvaluationMemory(path).add_reflection("NVDA", None,
+        EvaluationMemory(path).add_reflection(
+            "NVDA",
+            None,
             reflection("Inspect annual reports before investing"),
             persist=True,
         )
@@ -222,13 +275,19 @@ def test_wrong_json_shape_fails_closed(tmp_path):
 
 def test_persist_false_does_not_modify_existing_memory(tmp_path):
     memory = EvaluationMemory(tmp_path / "notes.json")
-    memory.add_reflection("NVDA", None,
+    memory.add_reflection(
+        "NVDA",
+        None,
         reflection("Compare customer concentration before reports"),
         persist=True,
     )
     previous = memory.path.read_bytes()
-    memory.add_reflection("JPM", None,
-        reflection("Check bank liquidity before investing"), persist=False)
+    memory.add_reflection(
+        "JPM",
+        None,
+        reflection("Check bank liquidity before investing"),
+        persist=False,
+    )
     assert memory.path.read_bytes() == previous
 
 
@@ -240,9 +299,14 @@ def test_reflect_and_remember_uses_injected_callback(tmp_path):
         return reflection("Confirm tool provenance before publishing")
 
     result = reflect_and_remember(
-        draft(), [], [{"ok": False}], ticker="NVDA", sector="Technology",
+        draft(),
+        [],
+        [{"ok": False}],
+        ticker="NVDA",
+        sector="Technology",
         memory=EvaluationMemory(tmp_path / "notes.json"),
-        reflect_fn=fake_reflect, today=date(2026, 10, 16),
+        reflect_fn=fake_reflect,
+        today=date(2026, 10, 16),
     )
     assert calls == [("NVDA", 0, 1)]
     assert len(result.added_notes) == 1
@@ -252,7 +316,11 @@ def test_reflect_and_remember_uses_injected_callback(tmp_path):
 def test_reflection_rejects_ticker_mismatch(tmp_path):
     with pytest.raises(ValueError, match="ticker"):
         reflect_and_remember(
-            draft(), [], [], ticker="JPM", sector=None,
+            draft(),
+            [],
+            [],
+            ticker="JPM",
+            sector=None,
             memory=EvaluationMemory(tmp_path / "notes.json"),
             reflect_fn=lambda *args: reflection(
                 "Validate SEC risk references"

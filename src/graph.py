@@ -208,8 +208,10 @@ def node_evaluate(state: AgentState) -> AgentState:
         updates["numeric_audit"] = audit
         updates["review_session"] = state["review_session"]
         t.log(
-            "evaluator", "numeric_audit",
-            {"iteration": state["iteration"]}, audit.rows(),
+            "evaluator",
+            "numeric_audit",
+            {"iteration": state["iteration"]},
+            audit.rows(),
         )
     updates["history"] = state["history"] + [row]
     return updates
@@ -224,7 +226,8 @@ def should_refine(state: AgentState) -> str:
         any_passed = any(candidate.passed for candidate in session.candidates)
         outcome = "refine" if refine else "pass" if any_passed else "exhausted"
         state["trace"].log(
-            "evaluator", "gate",
+            "evaluator",
+            "gate",
             {
                 "average": state["evaluation"].average,
                 "iteration": state["iteration"],
@@ -302,7 +305,8 @@ def node_reflect(state: AgentState) -> AgentState:
             }
         )
         t.log(
-            "evaluator", "selection",
+            "evaluator",
+            "selection",
             {"evaluated": len(outcome.history)},
             {
                 "selected_iteration": outcome.selected_iteration,

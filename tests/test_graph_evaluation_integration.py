@@ -13,42 +13,59 @@ import src.graph as graph
 
 def report(amount: str, *, thesis: str = "initial") -> Draft:
     return Draft(
-        ticker="NVDA", thesis=thesis,
-        bull_case=["growth"], bear_case=["valuation"],
+        ticker="NVDA",
+        thesis=thesis,
+        bull_case=["growth"],
+        bear_case=["valuation"],
         fundamentals=f"Revenue FY2025: {amount}",
-        news_and_catalysts="news", market_and_macro="macro",
+        news_and_catalysts="news",
+        market_and_macro="macro",
         conclusion="conclusion",
     )
 
 
 def grade(score: int = 5, *, accuracy: int | None = None) -> Evaluation:
     return Evaluation(
-        completeness=score, evidence=score,
+        completeness=score,
+        evidence=score,
         accuracy=score if accuracy is None else accuracy,
-        balance=score, clarity=score, critiques=["check figures"],
+        balance=score,
+        clarity=score,
+        critiques=["check figures"],
     )
 
 
 def finding() -> Finding:
     return Finding(
-        route="earnings", summary="Revenue FY2025: $100B",
-        key_figures=["Revenue FY2025: $100B"], risks=[], sources=["test"],
+        route="earnings",
+        summary="Revenue FY2025: $100B",
+        key_figures=["Revenue FY2025: $100B"],
+        risks=[],
+        sources=["test"],
     )
 
 
 def setup(monkeypatch, initial: Draft) -> dict:
     monkeypatch.setattr(graph, "synthesize", lambda ticker, findings: initial)
     monkeypatch.setattr(
-        graph.ev, "reflect",
+        graph.ev,
+        "reflect",
         lambda draft, findings, tools, **kwargs: Reflection(
-            weakest_section="news", unsupported_claims=[], missing_data=[],
-            failed_tools=[], what_to_change=[], confidence="medium",
+            weakest_section="news",
+            unsupported_claims=[],
+            missing_data=[],
+            failed_tools=[],
+            what_to_change=[],
+            confidence="medium",
             lessons=["Review source data"],
         ),
     )
     state = {
-        "ticker": "NVDA", "trace": RunTrace("NVDA"), "use_memory": False,
-        "reviewed_evaluation": True, "findings": [finding()],
+        "ticker": "NVDA",
+        "trace": RunTrace("NVDA"),
+        "use_memory": False,
+        "reviewed_evaluation": True,
+        "findings": [finding()],
     }
     state.update(graph.node_synthesize(state))
     return state
@@ -71,11 +88,13 @@ def finish(state):
 def test_keeps_best_valid_draft_even_when_revision_scores_lower(monkeypatch):
     state = setup(monkeypatch, report("$100B", thesis="best"))
     monkeypatch.setattr(
-        graph.ev, "evaluate",
+        graph.ev,
+        "evaluate",
         lambda draft, findings: grade(5 if draft.thesis == "best" else 4),
     )
     monkeypatch.setattr(
-        graph.ev, "optimize",
+        graph.ev,
+        "optimize",
         lambda draft, evaluation, findings: report("$100B", thesis="worse"),
     )
     assert evaluate(state) == "refine"

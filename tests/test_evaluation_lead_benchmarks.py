@@ -105,13 +105,16 @@ def test_evidence_matched_comparison_is_paired_and_scored_once_each():
     assert calls[1][2] == calls[2][2]
     assert result.average_delta == 2
     assert [r["candidate"] for r in result.rows()] == [
-        "matched_baseline", "reviewed_agent"
+        "matched_baseline",
+        "reviewed_agent",
     ]
 
 
 def test_no_fake_improvement_if_scores_equal():
     result = compare_evidence_matched(
-        "NVDA", [sample_finding()], sample_draft(),
+        "NVDA",
+        [sample_finding()],
+        sample_draft(),
         make_baseline=lambda *args: sample_draft(),
         judge=lambda *args: score(4),
     )
@@ -120,7 +123,9 @@ def test_no_fake_improvement_if_scores_equal():
 
 def test_negative_delta_reports_regression():
     result = compare_evidence_matched(
-        "NVDA", [sample_finding()], sample_draft(thesis="reviewed"),
+        "NVDA",
+        [sample_finding()],
+        sample_draft(thesis="reviewed"),
         make_baseline=lambda *args: sample_draft(thesis="baseline"),
         judge=lambda draft, _: score(2 if draft.thesis == "reviewed" else 5),
     )
@@ -130,7 +135,9 @@ def test_negative_delta_reports_regression():
 def test_wrong_agent_ticker_rejected():
     with pytest.raises(ValueError, match="reviewed"):
         compare_evidence_matched(
-            "JPM", [sample_finding()], sample_draft("NVDA"),
+            "JPM",
+            [sample_finding()],
+            sample_draft("NVDA"),
             judge=lambda *args: score(4),
         )
 
@@ -138,7 +145,9 @@ def test_wrong_agent_ticker_rejected():
 def test_wrong_baseline_ticker_rejected():
     with pytest.raises(ValueError, match="baseline"):
         compare_evidence_matched(
-            "NVDA", [sample_finding()], sample_draft(),
+            "NVDA",
+            [sample_finding()],
+            sample_draft(),
             make_baseline=lambda *args: sample_draft("JPM"),
             judge=lambda *args: score(4),
         )
@@ -164,7 +173,9 @@ def test_mutating_callback_cannot_change_original_findings():
 
 def test_rows_include_all_five_criteria_and_same_fingerprint():
     result = compare_evidence_matched(
-        "NVDA", [sample_finding()], sample_draft(),
+        "NVDA",
+        [sample_finding()],
+        sample_draft(),
         make_baseline=lambda *args: sample_draft(),
         judge=lambda *args: score(3),
     )
@@ -181,7 +192,9 @@ def test_does_not_implicitly_call_llm(monkeypatch):
 
     monkeypatch.setattr("src.evaluation_lead_benchmarks.structured", fail)
     compare_evidence_matched(
-        "NVDA", [sample_finding()], sample_draft(),
+        "NVDA",
+        [sample_finding()],
+        sample_draft(),
         make_baseline=lambda *args: sample_draft(),
         judge=lambda *args: score(4),
     )
@@ -189,8 +202,10 @@ def test_does_not_implicitly_call_llm(monkeypatch):
 
 def test_rows_reflect_numeric_scores():
     result = PairedScores(
-        ticker="XOM", evidence_sha256="0" * 64,
-        baseline=score(3), reviewed=score(5),
+        ticker="XOM",
+        evidence_sha256="0" * 64,
+        baseline=score(3),
+        reviewed=score(5),
     )
     assert result.rows()[0]["average"] == 3
     assert result.rows()[1]["average"] == 5

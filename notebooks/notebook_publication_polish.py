@@ -24,24 +24,36 @@ def md(value: str) -> dict:
 
 
 def code(value: str) -> dict:
-    return {"cell_type": "code", "metadata": {}, "source": value,
-            "outputs": [], "execution_count": None}
+    return {
+        "cell_type": "code",
+        "metadata": {},
+        "source": value,
+        "outputs": [],
+        "execution_count": None,
+    }
 
 
 def index(cells: list[dict], prefix: str) -> int:
-    matches = [i for i, cell in enumerate(cells) if source(cell).startswith(prefix)]
+    matches = [
+        i for i, cell in enumerate(cells) if source(cell).startswith(prefix)
+    ]
     if len(matches) != 1:
-        raise ValueError(f"Expected one notebook cell starting {prefix!r}, got {matches}")
+        raise ValueError(
+            f"Expected one notebook cell starting {prefix!r}, got {matches}"
+        )
     return matches[0]
 
 
 TITLE = """# EquityAgent: Evidence-Grounded Agentic Equity Research
 
 **AAI 520: Natural Language Processing and Generative AI | Final project**
-University of San Diego · Master of Science in Applied Artificial Intelligence · October 2026
+University of San Diego · Master of Science in Applied Artificial \
+Intelligence · October 2026
 
-**Research team:** Nicole Rowley (agent orchestration), Ashley Figueroa (NLP), and Pawan Bishwokarma (evaluation).
-**Code and reproducibility:** [EquityAgent GitHub repository](https://github.com/nicole-rowley-msaai/MS_AAI_520_NLP_GenAI_Final)
+**Research team:** Nicole Rowley (agent orchestration), Ashley Figueroa \
+(NLP), and Pawan Bishwokarma (evaluation).
+**Code and reproducibility:** [EquityAgent GitHub \
+repository](https://github.com/nicole-rowley-msaai/MS_AAI_520_NLP_GenAI_Final)
 
 ### Abstract
 
@@ -77,10 +89,15 @@ RESEARCH_DESIGN = """## Research questions and experimental design
 
 | Component | Data or comparison | Primary evidence |
 |---|---|---|
-| Sentiment NLP | Financial PhraseBank headlines; held-out test set | Accuracy, macro-F1, confusion matrix, agreement-band analysis |
-| Agent research | NVDA, JPM, XOM; market, macro, filing, and news findings | Tool trace, research brief, five-criterion LLM rubric |
-| Quality controls | Original versus reviewed policies applied to the same scored revisions | Threshold decisions, recognized numeric claims, selected revision |
-| Memory | Repeated runs with and without stored lessons | Planning steps, notes retrieved, rubric scores |
+| Sentiment NLP | Financial PhraseBank headlines; held-out test set | \
+Accuracy, macro-F1, confusion matrix, agreement-band analysis |
+| Agent research | NVDA, JPM, XOM; market, macro, filing, and news findings | \
+Tool trace, research brief, five-criterion LLM rubric |
+| Quality controls | Original versus reviewed policies applied to the same \
+scored revisions | Threshold decisions, recognized numeric claims, selected \
+revision |
+| Memory | Repeated runs with and without stored lessons | Planning steps, \
+notes retrieved, rubric scores |
 
 The original and reviewed policies reuse the **same evaluator model**; the
 comparison isolates their acceptance rules, not two separately trained judges.
@@ -92,7 +109,8 @@ RUN_METADATA = """# Record the effective configuration used for this execution.
 from datetime import datetime, timezone
 from src.config import MODELS
 
-print("Execution date (UTC):", datetime.now(timezone.utc).isoformat(timespec="seconds"))
+print("Execution date (UTC):", \
+datetime.now(timezone.utc).isoformat(timespec="seconds"))
 print("Configured models:", {key: MODELS[key] for key in
                              ("chain", "writer", "evaluator", "embeddings")})
 """
@@ -126,14 +144,17 @@ separate October 14 and October 18 exploratory runs used different processing
 conditions and are not treated as a controlled causal comparison here.
 """
 
-A_MEASURED_SUMMARY = """# Directly summarize this notebook's current classification results.
+A_MEASURED_SUMMARY = """# Directly summarize this notebook's current \
+classification results.
 metric_cols = ["classifier", "accuracy (mean)", "macro_f1 (mean)"]
-display(comparison[metric_cols].sort_values("macro_f1 (mean)", ascending=False))
+display(comparison[metric_cols].sort_values("macro_f1 (mean)", \
+ascending=False))
 
 best = comparison.loc[comparison["macro_f1 (mean)"].idxmax()]
 print("Highest observed macro-F1:", best["classifier"],
       "| score:", round(float(best["macro_f1 (mean)"]), 3))
-print("Accuracy by agreement level is reported in the preceding table and plot.")
+print("Accuracy by agreement level is reported in the preceding table and \
+plot.")
 """
 
 PART_B = """# Part B. Autonomous research workflow
@@ -157,11 +178,15 @@ Ticker → Plan → Route → Specialists → Synthesize → Evaluate
 
 | Stage | Implementation | Evidence shown |
 |---|---|---|
-| Planning and routing | `src/agents/planner.py`, `router.py` | Plan and routing decisions |
-| Retrieval and specialists | `src/agents/specialists.py`, `src/tools/` | Tool trace and retrieved findings |
-| News NLP | `src/chains/news_chain.py` | Chained classification and news summary |
+| Planning and routing | `src/agents/planner.py`, `router.py` | Plan and \
+routing decisions |
+| Retrieval and specialists | `src/agents/specialists.py`, `src/tools/` | \
+Tool trace and retrieved findings |
+| News NLP | `src/chains/news_chain.py` | Chained classification and news \
+summary |
 | Report generation | `src/agents/synthesizer.py` | Research brief |
-| Evaluation and revision | `src/agents/evaluator.py`, `evaluation_pipeline.py` | Rubric scores, critiques, numeric audit |
+| Evaluation and revision | `src/agents/evaluator.py`, \
+`evaluation_pipeline.py` | Rubric scores, critiques, numeric audit |
 | Reflection and memory | `src/memory/store.py` | Lessons written and reused |
 
 The first demonstration uses NVDA and begins with empty **experiment-local**
@@ -186,7 +211,8 @@ qualitative scores.
 | Minimum revision rounds | 1 | 1 |
 | Maximum evaluated drafts | 3 | 3 |
 | Recognized numeric contradictions | No separate gate | Prevent acceptance |
-| Preferred final draft | Last evaluated revision | Highest-scoring accepted revision |
+| Preferred final draft | Last evaluated revision | Highest-scoring accepted \
+revision |
 
 In addition, the enhanced policy records numeric claims it can parse and
 compares those against corresponding specialist findings. Unrecognized claims
@@ -233,7 +259,8 @@ else:
 """
 
 B8_REPORT = """if not state["accepted"]:
-    print("Quality criteria were not met; the following report is retained for diagnostic review.")
+    print("Quality criteria were not met; the following report is retained \
+for diagnostic review.")
 display(show.report_markdown(report))
 """
 
@@ -337,7 +364,8 @@ broader financial claim annotation and external validation.
 ### Reproducibility and implementation
 
 Source code, datasets, tests, and notebook construction are maintained in the
-[project repository](https://github.com/nicole-rowley-msaai/MS_AAI_520_NLP_GenAI_Final).
+[project \
+repository](https://github.com/nicole-rowley-msaai/MS_AAI_520_NLP_GenAI_Final).
 The setup cell records the checked-out commit. Model results, table values,
 and figures are calculated by the code cells during execution, with API
 responses and retrieval dates affecting reproducibility. Secrets are loaded
@@ -367,18 +395,25 @@ def polish_final_notebook(notebook: dict) -> dict:
         return notebook
 
     change(cells[index(cells, "# EquityAgent:")], TITLE)
-    change(cells[index(cells, "<!-- AAI520_EVALUATION_INTEGRATION_V1 -->")],
-           '<!-- AAI520_PUBLICATION_POLISH_V1 -->\n' + RESEARCH_DESIGN)
+    change(
+        cells[index(cells, "<!-- AAI520_EVALUATION_INTEGRATION_V1 -->")],
+        "<!-- AAI520_PUBLICATION_POLISH_V1 -->\n" + RESEARCH_DESIGN,
+    )
     change(cells[index(cells, "# Part A.")], PART_A)
     cells.insert(index(cells, "# Part A."), code(RUN_METADATA))
-    change(cells[index(cells, "**Reading the results (run of October")], A_INTERPRETATION)
+    change(
+        cells[index(cells, "**Reading the results (run of October")],
+        A_INTERPRETATION,
+    )
     a_idx = index(cells, "## A5. Interpretation")
     cells.insert(a_idx + 1, code(A_MEASURED_SUMMARY))
 
     change(cells[index(cells, "# Part B.")], PART_B)
     change(cells[index(cells, "## B7.")], B7_NOTE)
     change(cells[index(cells, "# Live quality-gate audit")], B7_AUDIT)
-    change(cells[index(cells, "display(show.report_markdown(report))")], B8_REPORT)
+    change(
+        cells[index(cells, "display(show.report_markdown(report))")], B8_REPORT
+    )
 
     change(cells[index(cells, "# Part C.")], PART_C)
     change(cells[index(cells, "## C1.")], C1)
@@ -386,16 +421,28 @@ def polish_final_notebook(notebook: dict) -> dict:
     comparison_cell = cells[index(cells, "rows = []\nfor t in TICKERS:")]
     comparison_source = source(comparison_cell)
     if not comparison_source.endswith("results"):
-        raise ValueError("Unexpected ticker-comparison code; refusing to patch")
-    change(comparison_cell, comparison_source[:-len("results")] +
-           'display(results[["ticker", "baseline_avg", "agent_first_draft",\n'
-           '                 "agent_final", "accepted", "selected_iteration"]])\n'
-           'display(results[["ticker", "numeric_checked", "numeric_contradicted",\n'
-           '                 "numeric_unverified", "unsupported_baseline",\n'
-           '                 "unsupported_agent", "tool_success"]])\n')
+        raise ValueError(
+            "Unexpected ticker-comparison code; refusing to patch"
+        )
+    change(
+        comparison_cell,
+        comparison_source[: -len("results")]
+        + 'display(results[["ticker", "baseline_avg", "agent_first_draft",\n'
+        '                 "agent_final", "accepted", "selected_iteration"]])\n'
+        'display(results[["ticker", "numeric_checked", '
+        '"numeric_contradicted",\n'
+        '                 "numeric_unverified", "unsupported_baseline",\n'
+        '                 "unsupported_agent", "tool_success"]])\n',
+    )
     export_cell = cells[index(cells, "from pathlib import Path\ntable1_path")]
-    change(export_cell, source(export_cell).replace(
-        'print("These are fresh integrated-run measurements; copy these values to the report.")\n', ''))
+    change(
+        export_cell,
+        source(export_cell).replace(
+            'print("These are fresh integrated-run measurements; copy these '
+            'values to the report.")\n',
+            "",
+        ),
+    )
     change(cells[index(cells, "## C2.")], C2)
     change(cells[index(cells, "## C3.")], C3)
     change(cells[index(cells, "## Summary and reproducibility")], SUMMARY)
@@ -408,11 +455,16 @@ def polish_final_notebook(notebook: dict) -> dict:
         cells.pop(index(cells, prefix))
 
     setup = cells[index(cells, "# --- Colab setup")]
-    change(setup, source(setup).replace(
-        "# To test a pull request, set BRANCH to its branch and REPO to a separate\n"
-        "# Drive folder, so the team's working copy is not touched.",
-        "# Use an isolated copy because the memory experiment resets local notes."
-    ))
+    change(
+        setup,
+        source(setup).replace(
+            "# To test a pull request, set BRANCH to its branch and REPO to a "
+            "separate\n"
+            "# Drive folder, so the team's working copy is not touched.",
+            "# Use an isolated copy because the memory experiment resets "
+            "local notes.",
+        ),
+    )
 
     for position, cell in enumerate(cells):
         if not cell.get("id"):

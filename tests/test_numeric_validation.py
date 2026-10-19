@@ -86,17 +86,23 @@ def test_conflicting_sources_are_marked_unverified():
 
 
 def test_percentage_metric_matches():
-    result = check("Operating margin FY2025: 25%", "Operating margin FY2025: 25%")
+    result = check(
+        "Operating margin FY2025: 25%", "Operating margin FY2025: 25%"
+    )
     assert result.checks[0].status == "supported"
 
 
 def test_percentage_metric_mismatch():
-    result = check("Operating margin FY2025: 30%", "Operating margin FY2025: 25%")
+    result = check(
+        "Operating margin FY2025: 30%", "Operating margin FY2025: 25%"
+    )
     assert result.checks[0].status == "contradicted"
 
 
 def test_explicit_correct_derived_growth():
-    result = check("Revenue increased from $100B to $120B, a calculated increase of 20%")
+    result = check(
+        "Revenue increased from $100B to $120B, a calculated increase of 20%"
+    )
     derived = [c for c in result.checks if c.kind == "derived_growth"]
     assert len(derived) == 1
     assert derived[0].status == "supported"
@@ -104,7 +110,9 @@ def test_explicit_correct_derived_growth():
 
 
 def test_explicit_wrong_derived_growth_is_not_exempt():
-    result = check("Revenue increased from $100B to $120B, a calculated increase of 35%")
+    result = check(
+        "Revenue increased from $100B to $120B, a calculated increase of 35%"
+    )
     derived = [c for c in result.checks if c.kind == "derived_growth"]
     assert derived[0].status == "contradicted"
     assert derived[0].reason == "incorrect_percentage_change"
@@ -117,7 +125,9 @@ def test_derived_growth_normalizes_units():
 
 
 def test_decline_uses_negative_growth():
-    result = check("Revenue declined from $120B to $90B, a calculated change of -25%")
+    result = check(
+        "Revenue declined from $120B to $90B, a calculated change of -25%"
+    )
     derived = [c for c in result.checks if c.kind == "derived_growth"]
     assert derived[0].status == "supported"
 
@@ -169,7 +179,9 @@ def test_catch_negative_revenue_mismatch():
 
 
 def test_equal_number_different_unit_is_unverified():
-    result = check("Operating margin FY2025: 25%", "Operating margin FY2025: $25M")
+    result = check(
+        "Operating margin FY2025: 25%", "Operating margin FY2025: $25M"
+    )
     assert result.checks[0].status == "unverified"
 
 
@@ -185,7 +197,9 @@ def test_rounded_billions_match_exact_millions():
 
 
 def test_rounded_free_cash_flow_matches():
-    result = check("FY2026 free cash flow of $96.7B", "Free cash flow FY2026: $96,676M")
+    result = check(
+        "FY2026 free cash flow of $96.7B", "Free cash flow FY2026: $96,676M"
+    )
     assert result.checks[0].status == "supported"
 
 

@@ -17,6 +17,11 @@ import json
 import re
 from pathlib import Path
 
+from notebook_evaluation_integration import enhance_final_notebook
+from notebook_publication_polish import polish_final_notebook
+from notebook_rubric_finalization import finalize_for_rubric
+from notebook_v10 import finalize_v10
+
 HERE = Path(__file__).parent
 NB1 = json.loads((HERE / "01_data_and_nlp_starter.ipynb").read_text())
 NB2 = json.loads((HERE / "02_agent_run.ipynb").read_text())
@@ -66,7 +71,8 @@ def renumber(section: list[dict], part: str) -> list[dict]:
     return section
 
 
-TITLE = f"""# EquityAgent: An Autonomous Agentic Workflow for Investment Research
+TITLE = f"""# EquityAgent: An Autonomous Agentic Workflow for \
+Investment Research
 
 **GitHub repository:** {REPO_URL} (branch `main`)
 
@@ -83,9 +89,11 @@ the next run's plan. Demo tickers: NVDA, JPM, XOM.
 
 | Part | Contents | Assignment heading |
 |---|---|---|
-| A | Data check, Kaggle news EDA, classifier evaluation | Agent Functions and Capabilities |
+| A | Data check, Kaggle news EDA, classifier evaluation | \
+Agent Functions and Capabilities |
 | B | One agent run with every step printed | Agent Design and Workflows |
-| C | Baseline comparison, memory ablation, limitations | Evaluation and Iteration |
+| C | Baseline comparison, memory ablation, limitations | \
+Evaluation and Iteration |
 
 **Models.** Planner, router and news chain: `gpt-6-luna`. Writer and
 optimizer: `claude-sonnet-5`. Evaluator: `gpt-6-sol` (a different family
@@ -93,7 +101,8 @@ from the writer, so the draft is not graded by the model that wrote it).
 Embeddings: `all-MiniLM-L6-v2`.
 """
 
-SETUP = """# --- Colab setup -----------------------------------------------------
+SETUP = """# --- Colab setup \
+-----------------------------------------------------
 import os
 import sys
 
@@ -106,7 +115,8 @@ drive.mount("/content/drive")
 # Drive folder, so the team's working copy is not touched.
 BRANCH = "main"
 REPO = "/content/drive/MyDrive/equity-agent"
-REPO_URL = "https://github.com/nicole-rowley-msaai/MS_AAI_520_NLP_GenAI_Final.git"
+REPO_URL = \
+"https://github.com/nicole-rowley-msaai/MS_AAI_520_NLP_GenAI_Final.git"
 
 if os.path.isdir(os.path.join(REPO, ".git")):
     !git -C {REPO} fetch -q origin
@@ -191,9 +201,11 @@ PART_B = """# Part B. Agent run
 The agent is a LangGraph state graph (`src/graph.py`):
 
 ```
-ticker -> plan -> route -> specialists -> synthesize -> evaluate --pass--> reflect -> memory
+ticker -> plan -> route -> specialists -> synthesize -> evaluate --pass--> \
+reflect -> memory
                                                             |                 ^
-                                                            +--refine--> optimize
+                                                            +--refine--> \
+optimize
 ```
 
 | Requirement | Where | Printed below |
@@ -211,12 +223,14 @@ from the run trace, then runs it a second time to show memory in use.
 Memory is cleared first so B2 is a true first run.
 """
 
-RESET_MEMORY = """# Start from empty memory so the first run below is a true first run.
+RESET_MEMORY = """# Start from empty memory so the first run below is a true \
+first run.
 store.NOTES_PATH.unlink(missing_ok=True)
 print("Lessons in memory:", len(store.load_notes()))
 """
 
-NEWS_NOTE = """The digest's `net_sentiment` is not the model's opinion: the chain counts
+NEWS_NOTE = """The digest's `net_sentiment` is not the model's opinion: the \
+chain counts
 the per-article labels from the classify step and applies majority rule
 with a 15-point margin (`sentiment_counts` is printed with the summary).
 Empty `figures` lists in the extract step are expected for headline-only
@@ -326,14 +340,9 @@ final = {
     ],
 }
 
-from notebook_evaluation_integration import enhance_final_notebook
-
 final = enhance_final_notebook(final)
-from notebook_publication_polish import polish_final_notebook
 final = polish_final_notebook(final)
-from notebook_rubric_finalization import finalize_for_rubric
 final = finalize_for_rubric(final)
-from notebook_v10 import finalize_v10
 final = finalize_v10(final)
 out = HERE / "final_project.ipynb"
 out.write_text(json.dumps(final, indent=1, ensure_ascii=False) + "\n")

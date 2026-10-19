@@ -197,9 +197,7 @@ def _fmt(items: list[Article]) -> str:
 def _run_batches(call, articles: list[Article]) -> dict[int, dict]:
     """Apply `call` to each batch of articles, concurrently, and merge the
     results by article id. Ids the model invents are ignored."""
-    batches = [
-        articles[i : i + BATCH] for i in range(0, len(articles), BATCH)
-    ]
+    batches = [articles[i : i + BATCH] for i in range(0, len(articles), BATCH)]
     if len(batches) <= 1:
         results = [call(b) for b in batches]
     else:

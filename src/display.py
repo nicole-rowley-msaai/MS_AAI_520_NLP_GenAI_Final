@@ -86,9 +86,7 @@ def findings_table(trace: RunTrace) -> pd.DataFrame:
     "tool_data") for the verifier; those events are not findings.
     """
     rows = [
-        e.output
-        for e in trace.select("specialist")
-        if e.kind != "tool_data"
+        e.output for e in trace.select("specialist") if e.kind != "tool_data"
     ]
     return pd.DataFrame(rows)[["route", "summary", "key_figures", "risks"]]
 

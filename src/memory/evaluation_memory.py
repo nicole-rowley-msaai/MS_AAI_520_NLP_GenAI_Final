@@ -175,9 +175,7 @@ class EvaluationMemory:
         The default is preview only. Use persist=True explicitly to write.
         """
         previous = self.load()
-        existing = {
-            normalize_lesson(n["lesson"]).casefold() for n in previous
-        }
+        existing = {normalize_lesson(n["lesson"]).casefold() for n in previous}
         new = []
         rejected = []
         run_date = (today or date.today()).isoformat()

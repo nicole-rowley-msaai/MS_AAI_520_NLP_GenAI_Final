@@ -149,14 +149,20 @@ def test_feedback_contains_observed_error_and_expected_value():
 
 
 def test_feedback_reports_unverified_and_missing_coverage():
-    assert "unresolved" in numeric_feedback(
-        audit_numeric_claims(draft("Revenue FY2024: $100B"), findings())
-    )[0]
-    assert "No numerical statements" in numeric_feedback(
-        audit_numeric_claims(
-            draft("Prose without recognized financial metrics"), findings()
-        )
-    )[0]
+    assert (
+        "unresolved"
+        in numeric_feedback(
+            audit_numeric_claims(draft("Revenue FY2024: $100B"), findings())
+        )[0]
+    )
+    assert (
+        "No numerical statements"
+        in numeric_feedback(
+            audit_numeric_claims(
+                draft("Prose without recognized financial metrics"), findings()
+            )
+        )[0]
+    )
 
 
 def test_end_to_end_offline_loop_corrects_numeric_error():
@@ -291,7 +297,9 @@ def test_session_does_not_allow_premature_finish():
         review.finish()
 
 
-LIVE_POLICY = NumericPolicy(require_recognized_claims=False, reject_unverified=False)
+LIVE_POLICY = NumericPolicy(
+    require_recognized_claims=False, reject_unverified=False
+)
 
 
 def test_live_policy_feedback_keeps_contradictions():
@@ -317,4 +325,6 @@ def test_live_policy_feedback_omits_coverage_note():
 def test_strict_policy_feedback_matches_unfiltered_feedback():
     for text in ("Revenue FY2024: $100B", "Prose without metrics"):
         audit = audit_numeric_claims(draft(text), findings())
-        assert numeric_feedback(audit, NumericPolicy()) == numeric_feedback(audit)
+        assert numeric_feedback(audit, NumericPolicy()) == numeric_feedback(
+            audit
+        )

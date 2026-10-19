@@ -125,7 +125,9 @@ class NumericAudit:
 
         This does NOT establish that unrecognized claims or raw data are true.
         """
-        return bool(self.checks) and all(c.status == "supported" for c in self.checks)
+        return bool(self.checks) and all(
+            c.status == "supported" for c in self.checks
+        )
 
     def rows(self) -> list[dict]:
         """Rows suitable for a notebook table or a CSV export."""
@@ -136,7 +138,9 @@ class NumericAudit:
                 "metric": c.metric,
                 "period": c.period,
                 "observed": str(c.observed),
-                "expected": str(c.expected) if c.expected is not None else None,
+                "expected": (
+                    str(c.expected) if c.expected is not None else None
+                ),
                 "reason": c.reason,
                 "excerpt": c.excerpt,
             }
@@ -229,7 +233,9 @@ def extract_reported_claims(text: str) -> tuple[FinancialClaim, ...]:
         found.append(
             FinancialClaim(
                 metric=_ALIAS.get(metric, metric),
-                period=_period(match["before"] or match["paren"] or match["after"]),
+                period=_period(
+                    match["before"] or match["paren"] or match["after"]
+                ),
                 value=parsed[0],
                 unit=parsed[1],
                 excerpt=match.group(),
@@ -323,7 +329,9 @@ def _derived_checks(
                 NumericCheck(
                     kind="derived_growth",
                     status="unverified",
-                    metric=_ALIAS.get(match["metric"].lower(), match["metric"].lower()),
+                    metric=_ALIAS.get(
+                        match["metric"].lower(), match["metric"].lower()
+                    ),
                     period=None,
                     observed=actual,
                     expected=None,
@@ -338,7 +346,9 @@ def _derived_checks(
             NumericCheck(
                 kind="derived_growth",
                 status="supported" if passed else "contradicted",
-                metric=_ALIAS.get(match["metric"].lower(), match["metric"].lower()),
+                metric=_ALIAS.get(
+                    match["metric"].lower(), match["metric"].lower()
+                ),
                 period=None,
                 observed=actual,
                 expected=expected,
