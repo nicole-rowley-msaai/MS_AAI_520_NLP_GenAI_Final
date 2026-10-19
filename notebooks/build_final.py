@@ -9,7 +9,8 @@ assignment asks for. Run from the repo root:
 The result has no outputs; run it top to bottom in Colab and export.
 
 Imports notebook_evaluation_integration.py to preserve the combined
-Evaluation Lead experiment when this builder is rerun.
+Evaluation Lead experiment when this builder is rerun, then applies the
+publication, rubric and v10 passes in that order.
 """
 
 import json
@@ -332,6 +333,8 @@ from notebook_publication_polish import polish_final_notebook
 final = polish_final_notebook(final)
 from notebook_rubric_finalization import finalize_for_rubric
 final = finalize_for_rubric(final)
+from notebook_v10 import finalize_v10
+final = finalize_v10(final)
 out = HERE / "final_project.ipynb"
 out.write_text(json.dumps(final, indent=1, ensure_ascii=False) + "\n")
 print(f"wrote {out} with {len(final['cells'])} cells")
