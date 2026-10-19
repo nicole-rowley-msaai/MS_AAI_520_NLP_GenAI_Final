@@ -86,6 +86,9 @@ class FinancialClaim:
     value: Decimal
     unit: Literal["USD", "percent"]
     excerpt: str
+    # Half of the last written digit, in the same units as ``value``:
+    # "$215.9B" can stand for anything from $215.85B to $215.95B.
+    tolerance: Decimal = Decimal(0)
 
 
 @dataclass(frozen=True)
@@ -162,6 +165,46 @@ def _amount(text: str) -> tuple[Decimal, Literal["USD", "percent"]] | None:
     return None
 
 
+def _rounding_tolerance(text: str) -> Decimal:
+    """Half a unit in the last written digit, scaled to the stated unit.
+
+    "$215.9B" -> $0.05B, "$96,676M" -> $0.5M, "25%" -> 0.5 points.
+    A brief that rounds a source figure is consistent with it, not a
+    contradiction of it.
+    """
+    text = text.strip()
+    pct = _PCT_PARTS.fullmatch(text)
+    if pct:
+        num, scale = pct["num"], Decimal(1)
+    else:
+        money = _VALUE_PARTS.fullmatch(text)
+        if not money:
+            return Decimal(0)
+        num = money["num"]
+        scale = _SCALE[money["scale"].lower() if money["scale"] else None]
+    num = num.replace(",", "").lstrip("-")
+    decimals = len(num.split(".", 1)[1]) if "." in num else 0
+    return Decimal(5) * Decimal(10) ** -(decimals + 1) * scale
+
+
+def _consistent(a: FinancialClaim, b: FinancialClaim) -> bool:
+    """True when two figures can be the same number at different rounding."""
+    return abs(a.value - b.value) <= max(a.tolerance, b.tolerance)
+
+
+def _distinct_values(sources: list[FinancialClaim]) -> list[FinancialClaim]:
+    """Collapse source figures that are the same number written differently.
+
+    "$215.9B" in a summary and "$215,938M" in key figures are one value,
+    not conflicting evidence. The most precise representative is kept.
+    """
+    groups: list[FinancialClaim] = []
+    for source in sorted(sources, key=lambda c: c.tolerance):
+        if not any(_consistent(source, kept) for kept in groups):
+            groups.append(source)
+    return groups
+
+
 def _period(text: str | None) -> str | None:
     if not text:
         return None
@@ -190,6 +233,7 @@ def extract_reported_claims(text: str) -> tuple[FinancialClaim, ...]:
                 value=parsed[0],
                 unit=parsed[1],
                 excerpt=match.group(),
+                tolerance=_rounding_tolerance(match["amount"]),
             )
         )
     return tuple(found)
@@ -206,30 +250,46 @@ def _reported_checks(
     source_claims = extract_reported_claims(source_text)
     checks: list[NumericCheck] = []
     for claim in extract_reported_claims(draft_text):
-        comparable = [
+        same_metric = [
             source
             for source in source_claims
-            if source.metric == claim.metric
-            and source.period == claim.period
-            and source.unit == claim.unit
+            if source.metric == claim.metric and source.unit == claim.unit
         ]
-        candidates = {source.value for source in comparable}
-        if not candidates:
-            status: Status = "unverified"
-            expected = None
+        comparable = [s for s in same_metric if s.period == claim.period]
+        candidates = _distinct_values(comparable)
+        expected: Decimal | None = None
+        if not candidates and claim.period is None:
+            # The brief did not name a period. Accept a match with any
+            # period's figure, but never call it a contradiction: without a
+            # period there is nothing definite to contradict.
+            match = next(
+                (s for s in same_metric if _consistent(claim, s)), None
+            )
+            if match is not None:
+                status: Status = "supported"
+                expected = match.value
+                reason = "matching_value_period_not_stated"
+            else:
+                status = "unverified"
+                reason = "no_comparable_metric_period_unit_in_findings"
+        elif not candidates:
+            status = "unverified"
             reason = "no_comparable_metric_period_unit_in_findings"
         elif len(candidates) > 1:
             status = "unverified"
-            expected = None
             reason = "conflicting_values_in_findings"
         else:
-            expected = next(iter(candidates))
-            status = "supported" if claim.value == expected else "contradicted"
-            reason = (
-                "matching_metric_period_and_value"
-                if status == "supported"
-                else "value_differs_from_findings"
-            )
+            expected = candidates[0].value
+            if _consistent(claim, candidates[0]):
+                status = "supported"
+                reason = (
+                    "matching_metric_period_and_value"
+                    if claim.value == expected
+                    else "matching_within_rounding"
+                )
+            else:
+                status = "contradicted"
+                reason = "value_differs_from_findings"
         checks.append(
             NumericCheck(
                 kind="reported",

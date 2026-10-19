@@ -171,3 +171,55 @@ def test_catch_negative_revenue_mismatch():
 def test_equal_number_different_unit_is_unverified():
     result = check("Operating margin FY2025: 25%", "Operating margin FY2025: $25M")
     assert result.checks[0].status == "unverified"
+
+
+# Rounding: a brief that rounds a source figure is consistent with it. -----
+# These reproduce the October 18 NVDA run, where "$215.9B" was compared
+# exactly with "$215,938M" and counted as a contradiction.
+
+
+def test_rounded_billions_match_exact_millions():
+    result = check("FY2026 revenue of $215.9B", "Revenue FY2026: $215,938M")
+    assert result.checks[0].status == "supported"
+    assert result.checks[0].reason == "matching_within_rounding"
+
+
+def test_rounded_free_cash_flow_matches():
+    result = check("FY2026 free cash flow of $96.7B", "Free cash flow FY2026: $96,676M")
+    assert result.checks[0].status == "supported"
+
+
+def test_more_precise_brief_matches_rounded_source():
+    result = check("Revenue FY2026: $215,938M", "Revenue FY2026: $215.9B")
+    assert result.checks[0].status == "supported"
+
+
+def test_rounding_tolerance_does_not_hide_real_errors():
+    # $216.9B is a full billion off; one decimal place allows only $0.05B.
+    result = check("FY2026 revenue of $216.9B", "Revenue FY2026: $215,938M")
+    assert result.checks[0].status == "contradicted"
+
+
+def test_rounded_percentage_matches():
+    result = check("Net margin FY2026: 55.6%", "Net margin FY2026: 55.62%")
+    assert result.checks[0].status == "supported"
+
+
+def test_same_value_in_two_formats_is_not_a_source_conflict():
+    result = check(
+        "Revenue FY2026: $215.9B",
+        "Revenue FY2026: $215,938M",
+        "Revenue FY2026: $215.94B",
+    )
+    assert result.checks[0].status == "supported"
+
+
+def test_period_not_stated_matches_any_period_value():
+    result = check("revenue of $215.9B", "Revenue FY2026: $215,938M")
+    assert result.checks[0].status == "supported"
+    assert result.checks[0].reason == "matching_value_period_not_stated"
+
+
+def test_period_not_stated_is_never_a_contradiction():
+    result = check("revenue of $300B", "Revenue FY2026: $215,938M")
+    assert result.checks[0].status == "unverified"

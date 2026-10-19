@@ -323,5 +323,12 @@ def finalize_v10(notebook: dict) -> dict:
              'pd.set_option("display.max_colwidth", 120)\n',
              'pd.set_option("display.max_colwidth", 120)\n' + IMPORT_GUARD)
 
+    # B7: the numeric audit accepts figures rounded at their written
+    # precision.
+    _replace(cells, "## B7. Evaluator", "Unrecognized or unsupported claims",
+             "Figures are compared at the precision the brief writes them, "
+             "so rounding\n(\"$215.9B\" for \"$215,938M\") is not a "
+             "contradiction.\n\nUnrecognized or unsupported claims")
+
     cells.insert(plot + 1, _code(MATCHED_SUMMARY))
     return notebook
