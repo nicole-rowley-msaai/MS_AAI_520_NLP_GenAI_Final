@@ -12,6 +12,7 @@ from datetime import date
 from pathlib import Path
 
 from src.config import ROOT
+from src.memory.evaluation_memory import select_lessons
 
 NOTES_PATH = ROOT / "memory" / "notes.json"
 MAX_NOTES = 60  # keep the file short; the planner reads the relevant subset
@@ -31,19 +32,14 @@ def save_notes(notes: list[dict], path: Path = NOTES_PATH) -> None:
 def relevant_notes(
     ticker: str, sector: str | None, notes: list[dict], limit: int = 8
 ) -> list[dict]:
-    """Same ticker first, then same sector, then general lessons."""
+    """Same ticker first, then same sector, then general lessons.
 
-    def rank(n: dict) -> int:
-        if n.get("ticker") == ticker:
-            return 0
-        if sector and n.get("sector") == sector:
-            return 1
-        if n.get("ticker") in (None, "", "*"):
-            return 2
-        return 3
-
-    ranked = sorted(notes, key=lambda n: (rank(n), n.get("date", "")))
-    return [n for n in ranked if rank(n) < 3][:limit]
+    Within each group the newest lessons come first, so once a ticker has
+    more than ``limit`` lessons the planner still sees what recent runs
+    learned. (Sorting oldest first, as before, dropped them.) The ranking
+    is the Evaluation Lead's ``select_lessons``.
+    """
+    return select_lessons(notes, ticker, sector, limit=limit)
 
 
 def add_lessons(

@@ -367,3 +367,29 @@ def test_net_sentiment_is_counted_not_judged():
     assert net_sentiment({"positive": 5, "neutral": 0, "negative": 4}) == (
         "neutral"
     )
+
+
+def test_memory_reads_newest_lessons_when_there_are_many():
+    notes = [
+        {"ticker": "X", "sector": "Tech", "date": f"2026-10-{day:02d}",
+         "lesson": f"lesson {day}"}
+        for day in range(1, 13)
+    ]
+    read = store.relevant_notes("X", "Tech", notes, limit=8)
+    assert [n["lesson"] for n in read] == [
+        f"lesson {day}" for day in range(12, 4, -1)
+    ]
+
+
+def test_memory_ranks_ticker_before_sector_before_general():
+    notes = [
+        {"ticker": "", "sector": "", "date": "2026-10-19", "lesson": "general"},
+        {"ticker": "Y", "sector": "Tech", "date": "2026-10-18",
+         "lesson": "sector"},
+        {"ticker": "X", "sector": "Tech", "date": "2026-10-01",
+         "lesson": "ticker"},
+        {"ticker": "Z", "sector": "Energy", "date": "2026-10-19",
+         "lesson": "unrelated"},
+    ]
+    read = store.relevant_notes("X", "Tech", notes)
+    assert [n["lesson"] for n in read] == ["ticker", "sector", "general"]
