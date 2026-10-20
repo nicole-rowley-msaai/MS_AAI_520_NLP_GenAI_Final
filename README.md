@@ -21,7 +21,7 @@ EquityAgent is a LangGraph-based investment research system that transforms a st
 | [`docs/nlp_track.md`](docs/nlp_track.md) | NLP design, diagnostics, and experiments |
 | [`notebooks/04_evaluator_policy_comparison.ipynb`](notebooks/04_evaluator_policy_comparison.ipynb) | Supporting evaluator decision-policy comparison on an earlier run; the final notebook's C2 performs the same replay on the submitted run |
 
-[GitHub repository](https://github.com/nicole-rowley-msaai/MS_AAI_520_NLP_GenAI_Final) · [Final executed HTML](EquityAgent_Final_Executed.html)
+[GitHub repository](https://github.com/nicole-rowley-msaai/MS_AAI_520_NLP_GenAI_Final)
 
 ## Assignment requirements and evidence
 
