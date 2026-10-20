@@ -1,0 +1,9 @@
+,id,task,tool,purpose,priority
+0,1,"Pull Nvidia's key valuation and profitability stats including market cap, P/E, P/B, margins, ROE, and analyst price targets",get_key_stats,Establish baseline valuation and profitability metrics to assess if current price reflects fundamentals,high
+1,2,"Pull key stats for a peer (e.g., AMD or AVGO) to benchmark Nvidia's margins and ROE",get_key_stats,"Per lesson learned, relative profitability claims require peer comparison rather than standalone assertion",high
+2,3,"Retrieve annual income statement, balance sheet, and cash flow data for Nvidia",get_financials,"Assess revenue growth trajectory, margin trends, cash generation, and balance sheet strength to support or refute growth narrative",high
+3,4,"Search latest 10-K for segment revenue breakdown across data center, gaming, and automotive, plus customer concentration disclosures",search_filings,"Per lesson learned, segment and customer concentration data is critical for assessing dependency risk on hyperscaler capex cycles",high
+4,5,"Search 10-K Risk Factors and MD&A for export controls, China restrictions, and supply chain risks",search_filings,Identify regulatory and geopolitical risks that could materially impact Nvidia's addressable market,high
+5,6,"Pull 5-year daily price history to calculate volatility, beta vs SPY, and recent moving average trends",get_price_history,"Quantify historical market risk and momentum, to be supplemented with implied volatility context per lesson learned",medium
+6,7,Retrieve recent news headlines from the last 30 days on Nvidia,get_news,"Surface recent catalysts, deals, or controversies; per lesson learned, flag any unconfirmed items with confidence tags in the brief",medium
+7,8,"Pull current macro snapshot including CPI, Fed funds rate, 10-year yield, and GDP trends",get_macro_snapshot,Assess macro backdrop affecting rate-sensitive tech valuations and capex cycles for AI infrastructure spending,medium

@@ -1,0 +1,8 @@
+,step_id,route,reason
+0,1,earnings,"This task focuses on company valuation multiples and financial ratios such as margins and ROE, with analyst price targets as supporting valuation context."
+1,2,earnings,"Annual income statements, balance sheets, and cash flow statements are financial-statement data used to assess growth, margins, R&D investment, and balance-sheet strength."
+2,3,market,"This task analyzes five-year price performance, volatility, beta versus SPY, and moving averages, which are market and technical indicators."
+3,4,earnings,"This task requires searching and interpreting the latest 10-K risk-factor disclosures, including customer concentration, export controls, and supply-chain dependencies."
+4,5,news,"This task requests recent Nvidia headlines about demand, export policy, competition, and earnings reactions."
+5,6,market,"This task asks for current interest rates, CPI, and GDP trends to assess macroeconomic conditions affecting AI infrastructure spending."
+6,7,earnings,"This task analyzes management commentary in a 10-K MD&A on demand sustainability and competitive positioning, which falls under filings and earnings analysis."

@@ -1,0 +1,8 @@
+,route,tool,args,ok,rows,error
+0,earnings,get_key_stats,{},True,14,
+1,earnings,get_financials,{},True,12,
+2,earnings,search_filings,"{'query': 'Search latest 10-K risk factors for customer concentration, export control, and supply chain risks'}",True,3,
+3,earnings,search_filings,{'query': 'Search 10-K MD&A for management commentary on AI data center demand and competitive positioning'},True,3,
+4,market,get_price_history,{},True,7,
+5,market,get_macro_snapshot,{},True,5,
+6,news,get_news,{},True,99,

@@ -1,0 +1,5 @@
+,classifier,runs,accuracy (mean),macro_f1 (mean),accuracy (vote),macro_f1 (vote)
+0,keyword,1,0.687,0.575,0.687,0.575
+1,tf-idf + logistic regression,1,0.793,0.771,0.793,0.771
+2,LLM zero-shot,3,0.833,0.839,0.853,0.863
+3,LLM few-shot,3,0.831,0.838,0.837,0.846

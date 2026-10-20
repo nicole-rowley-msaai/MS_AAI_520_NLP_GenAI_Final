@@ -1,0 +1,8 @@
+,id,task,tool,purpose,priority
+0,1,"Retrieve current valuation multiples, margins, ROE, and analyst price targets",get_key_stats,Establish baseline valuation and how much growth is already priced in relative to peers,high
+1,2,"Pull annual income statement, balance sheet, and cash flow for the last several years",get_financials,"Assess revenue growth trajectory, margin trends, R&D investment, and balance sheet strength to fund growth",high
+2,3,"Analyze 5-year price history for returns, volatility, beta vs SPY, and moving averages",get_price_history,"Understand market behavior, momentum, and risk profile relative to the broader market",high
+3,4,"Search latest 10-K risk factors for customer concentration, export control, and supply chain risks",search_filings,"Identify key disclosed risks such as reliance on TSMC, China export restrictions, and hyperscaler customer concentration that could impact the growth thesis",high
+4,5,Fetch recent news headlines on Nvidia,get_news,"Capture latest developments on AI chip demand, export policy changes, competitive threats, and earnings reactions",high
+5,6,"Get current macro snapshot including interest rates, CPI, and GDP trends",get_macro_snapshot,Contextualize how macro conditions like rate levels and economic growth could affect capex spending on AI infrastructure by Nvidia's customers,medium
+6,7,Search 10-K MD&A for management commentary on AI data center demand and competitive positioning,search_filings,"Gain management's own view on growth sustainability and competitive dynamics versus AMD, custom silicon, and other entrants",medium

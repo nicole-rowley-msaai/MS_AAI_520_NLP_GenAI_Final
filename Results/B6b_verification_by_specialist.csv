@@ -1,0 +1,4 @@
+,route,status,checked,confirmed,not_found,contradicted,not_found_figures,corrections,note
+0,earnings,checked,41,41,0,0,,,
+1,market,checked,23,23,0,0,,,
+2,news,not_checked,0,0,0,0,,,"News figures come from article text, which the verifier does not hold."

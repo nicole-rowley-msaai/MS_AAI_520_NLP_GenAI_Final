@@ -1,0 +1,30 @@
+{
+ "weakest_section": "Bull case",
+ "unsupported_claims": [
+  "SpaceX ~$40B financing talks for Nvidia AI hardware are presented as a bull signal despite being explicitly labeled unconfirmed reports",
+  "Critical commentary alleging large warehouse inventory buildup is cited in the bear case despite being flagged unverified, with no corroborating inventory-turnover or days-sales-outstanding data to confirm or refute it",
+  "ROE of 117.2% and profit margin of 63.7% are called 'strong profitability' without any peer/sector comparison to substantiate relative competitive positioning",
+  "'Strong buy' consensus and $328.72 mean target are presented without distribution of individual analyst targets or recent revision trends, which would show whether sentiment is improving or deteriorating"
+ ],
+ "missing_data": [
+  "No segment-level revenue breakdown (data center vs. gaming vs. automotive/other) to assess concentration risk or growth drivers within the AI hardware story",
+  "No peer/competitor valuation comparison (e.g., AMD, Broadcom, custom silicon from hyperscalers) to contextualize the 13.6x forward P/E and ROE figures",
+  "No options market data (implied volatility, put/call skew) despite citing historical volatility and beta as key risk metrics",
+  "No insider transaction or institutional ownership/flow data to corroborate or refute the unverified inventory buildup and demand concerns",
+  "No forward guidance or next-quarter consensus estimates beyond trailing/forward P/E, limiting insight into near-term earnings trajectory"
+ ],
+ "failed_tools": [],
+ "what_to_change": [
+  "Add a peer-comparison step (pull key stats for 2-3 direct competitors) whenever profitability/valuation ratios are cited as 'strong' in isolation",
+  "When news findings flag claims as 'unverified' or 'unconfirmed' (SpaceX financing, inventory buildup), attempt a secondary corroborating search before including them in bull/bear cases, or clearly downweight them in the thesis rather than listing alongside confirmed figures",
+  "Pull segment-level revenue data from filings (10-K/10-Q segment reporting) for companies with multiple product lines to assess concentration risk more precisely than 'customer concentration' language alone",
+  "Include options-implied volatility alongside historical volatility when beta/volatility is a core risk thesis point"
+ ],
+ "confidence": "medium",
+ "lessons": [
+  "For AI/semiconductor companies, pull segment revenue breakdown (data center/gaming/auto) to properly assess customer and product concentration risk cited in filings",
+  "When citing profitability ratios (ROE, margins) as a bull-case strength, pull at least one peer's equivalent stats to support relative claims rather than asserting strength in isolation",
+  "Flag unverified news items (unconfirmed deals, anonymous critical commentary) with a visible confidence tag in the brief itself, not just in the underlying finding, so the reader can weight them appropriately",
+  "For high-beta/high-volatility names, supplement historical volatility with options-implied volatility or analyst estimate dispersion to strengthen the market-risk narrative"
+ ]
+}

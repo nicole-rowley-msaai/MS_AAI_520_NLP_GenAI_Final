@@ -1,0 +1,9 @@
+step,seconds
+evaluator,15.4
+optimizer,13.9
+planner,8.5
+reflection,15.4
+router,16.7
+specialist,75.6
+specialists,49.0
+synthesizer,19.5
