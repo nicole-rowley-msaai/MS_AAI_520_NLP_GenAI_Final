@@ -1,4 +1,4 @@
-ticker,baseline_avg,agent_first_draft,agent_final,accepted,selected_iteration,numeric_checked,numeric_contradicted,numeric_unverified,iterations,tool_success,unsupported_baseline,unsupported_agent
-NVDA,1.8,4.2,4.4,True,1,4,0,2,2,1.0,4,5
-JPM,2.0,4.4,4.4,True,1,1,0,0,2,1.0,8,8
-XOM,1.6,4.4,4.4,True,0,0,0,0,2,1.0,14,12
+ticker,baseline_avg,matched_baseline_avg,agent_first_draft,agent_final,accepted,selected_iteration,numeric_checked,numeric_contradicted,numeric_unverified,iterations,tool_success,figures_checked,figures_confirmed,figures_corrected,unsupported_baseline,unsupported_matched,unsupported_agent
+NVDA,2.0,4.0,4.0,4.6,True,1,2,0,0,2,1.0,62,59,0,5,11,12
+JPM,1.6,3.6,3.6,4.6,True,1,4,0,0,2,1.0,83,65,0,9,5,7
+XOM,2.0,4.4,4.2,4.4,True,1,0,0,0,2,1.0,51,51,0,19,7,10
